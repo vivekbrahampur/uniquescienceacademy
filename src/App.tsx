@@ -5,6 +5,8 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import StudentLogin from './pages/StudentLogin';
 import StudentDashboard from './pages/StudentDashboard';
+import TeacherLogin from './pages/TeacherLogin';
+import TeacherDashboard from './pages/TeacherDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -21,6 +23,8 @@ export default function App() {
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/dashboard" element={<StudentDashboard />} />
+              <Route path="/teacher/login" element={<TeacherLogin />} />
+              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
             </Routes>
           </main>
           <Footer />

@@ -22,7 +22,6 @@ const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
 // Initialize default settings if not exist
 async function initSettings() {
-  throw new Error('Test error');
   console.log('Initializing settings...');
   try {
     const settingsRef = doc(db, 'settings', 'global');
@@ -287,15 +286,43 @@ async function startServer() {
     const authHeader = req.headers.authorization;
     if (authHeader) {
       const token = authHeader.split(' ')[1];
-      jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
+      jwt.verify(token, JWT_SECRET, (err, decoded: any) => {
+        if (err || decoded.role !== 'admin') {
           return res.status(403).json({ error: 'Forbidden' });
         }
+        (req as any).user = decoded;
         next();
       });
     } else {
       res.status(401).json({ error: 'Unauthorized' });
     }
+  };
+
+  const authenticateUser = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const token = authHeader.split(' ')[1];
+      jwt.verify(token, JWT_SECRET, (err, decoded: any) => {
+        if (err) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
+        (req as any).user = decoded;
+        next();
+      });
+    } else {
+      res.status(401).json({ error: 'Unauthorized' });
+    }
+  };
+
+  const checkPermission = (permission: string) => {
+    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const user = (req as any).user;
+      if (user.role === 'admin') return next();
+      if (user.role === 'teacher' && user.permissions && user.permissions.includes(permission)) {
+        return next();
+      }
+      res.status(403).json({ error: 'Insufficient permissions' });
+    };
   };
 
   // API Routes
@@ -358,7 +385,7 @@ async function startServer() {
           }
         }
         
-        const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
+        const token = jwt.sign({ username, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ success: true, token });
       } else {
         res.status(401).json({ success: false, error: 'Invalid username or password' });
@@ -442,8 +469,65 @@ async function startServer() {
     }
   });
 
+  // Admin: Teachers
+  app.get('/api/admin/teachers', authenticateAdmin, async (req, res) => {
+    try {
+      const teachersSnap = await getDocs(collection(db, 'teachers'));
+      const teachers = teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(teachers);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch teachers' });
+    }
+  });
+
+  app.post('/api/admin/teachers', authenticateAdmin, async (req, res) => {
+    const teacherData = req.body;
+    try {
+      const docRef = await addDoc(collection(db, 'teachers'), {
+        ...teacherData,
+        createdAt: new Date().toISOString()
+      });
+      res.json({ id: docRef.id, ...teacherData });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to add teacher' });
+    }
+  });
+
+  app.delete('/api/admin/teachers/:id', authenticateAdmin, async (req, res) => {
+    try {
+      await deleteDoc(doc(db, 'teachers', req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to delete teacher' });
+    }
+  });
+
+  // Teacher: Login
+  app.post('/api/teacher/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+      const q = query(collection(db, 'teachers'), where('username', '==', username), where('password', '==', password));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const teacher = snap.docs[0].data();
+        const token = jwt.sign({ 
+          id: snap.docs[0].id, 
+          username: teacher.username, 
+          name: teacher.name,
+          role: 'teacher', 
+          permissions: teacher.permissions 
+        }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ success: true, token, teacher: { id: snap.docs[0].id, ...teacher } });
+      } else {
+        res.status(401).json({ success: false, error: 'Invalid username or password' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
   // Admin: Students
-  app.get('/api/admin/students', authenticateAdmin, async (req, res) => {
+  app.get('/api/admin/students', authenticateUser, checkPermission('manage_students'), async (req, res) => {
     try {
       const studentsSnap = await getDocs(collection(db, 'students'));
       const students = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -453,7 +537,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/students', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/students', authenticateUser, checkPermission('manage_students'), async (req, res) => {
     const { name, father_name, mother_name, class_name, roll_no, photo_url } = req.body;
     try {
       // Check if student exists
@@ -473,7 +557,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/students/full', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/students/full', authenticateUser, checkPermission('manage_students'), async (req, res) => {
     const { name, father_name, mother_name, class_name, roll_no, email, phone, dob, gender, address, photo_url } = req.body;
     try {
       // Check if student exists
@@ -498,7 +582,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/admin/students/:id', authenticateAdmin, async (req, res) => {
+  app.delete('/api/admin/students/:id', authenticateUser, checkPermission('manage_students'), async (req, res) => {
     const id = req.params.id as string;
     console.log(`Attempting to delete student: ${id}`);
     try {
@@ -511,7 +595,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/students/promote', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/students/promote', authenticateUser, checkPermission('manage_students'), async (req, res) => {
     const { studentIds, nextClass, targetClass } = req.body;
     const finalClass = targetClass || nextClass;
     console.log(`Attempting to promote students: ${studentIds} to ${finalClass}`);
@@ -536,7 +620,7 @@ async function startServer() {
   });
 
   // Admin: Results
-  app.post('/api/admin/results', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/results', authenticateUser, checkPermission('results'), async (req, res) => {
     const { student_id, results } = req.body;
     try {
       // Delete existing results for this student
@@ -568,7 +652,7 @@ async function startServer() {
   });
 
   // Admin: Notice Panel
-  app.post('/api/admin/notice', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/notice', authenticateUser, checkPermission('notices'), async (req, res) => {
     const { title, pdf_url } = req.body;
     try {
       await addDoc(collection(db, 'notices'), {
@@ -581,7 +665,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/admin/notices/:id', authenticateAdmin, async (req, res) => {
+  app.delete('/api/admin/notices/:id', authenticateUser, checkPermission('notices'), async (req, res) => {
     const id = req.params.id;
     try {
       await deleteDoc(doc(db, 'notices', id));
@@ -603,7 +687,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/test-links', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/test-links', authenticateUser, checkPermission('tests'), async (req, res) => {
     const { class_name, subject, title, link } = req.body;
     try {
       await addDoc(collection(db, 'test_links'), {
@@ -626,7 +710,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/admin/test-links/:id', authenticateAdmin, async (req, res) => {
+  app.delete('/api/admin/test-links/:id', authenticateUser, checkPermission('tests'), async (req, res) => {
     const id = req.params.id as string;
     console.log(`Attempting to delete test link: ${id}`);
     try {
@@ -639,7 +723,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/online-test-marks', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/online-test-marks', authenticateUser, checkPermission('tests'), async (req, res) => {
     const { class_name, roll_no, test_title, score, total } = req.body;
     try {
       const q = query(collection(db, 'students'), where('class_name', '==', class_name), where('roll_no', '==', roll_no));
@@ -692,7 +776,7 @@ async function startServer() {
   });
 
   // Admin: Attendance
-  app.post('/api/admin/attendance', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/attendance', authenticateUser, checkPermission('attendance'), async (req, res) => {
     const { records, date, class_name } = req.body;
     try {
       const batch = writeBatch(db);
@@ -727,7 +811,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/admin/attendance/:class_name/:date', authenticateAdmin, async (req, res) => {
+  app.get('/api/admin/attendance/:class_name/:date', authenticateUser, checkPermission('attendance'), async (req, res) => {
     try {
       const q = query(collection(db, 'attendance'), 
         where('class_name', '==', req.params.class_name),
@@ -745,7 +829,7 @@ async function startServer() {
   });
 
   // Admin: Fees
-  app.post('/api/admin/fees', authenticateAdmin, async (req, res) => {
+  app.post('/api/admin/fees', authenticateUser, checkPermission('fees'), async (req, res) => {
     const { studentId, amount, month, date, remarks } = req.body;
     try {
       const receiptNo = `REC-${Date.now().toString().slice(-6)}`;
@@ -766,7 +850,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/admin/fees/:studentId', authenticateAdmin, async (req, res) => {
+  app.get('/api/admin/fees/:studentId', authenticateUser, checkPermission('fees'), async (req, res) => {
     try {
       const q = query(collection(db, 'fees'), where('studentId', '==', req.params.studentId));
       const snap = await getDocs(q);

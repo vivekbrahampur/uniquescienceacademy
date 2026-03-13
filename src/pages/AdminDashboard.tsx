@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, QrCode } from 'lucide-react';
+import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, QrCode, UserCog, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('registration');
   const [students, setStudents] = useState<any[]>([]);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const { settings: themeSettings, updateSettings } = useTheme();
 
@@ -100,6 +101,11 @@ export default function AdminDashboard() {
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 5000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Sidebar */}
@@ -128,6 +134,13 @@ export default function AdminDashboard() {
           >
             <Users className="h-5 w-5" />
             <span>Manage Students</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('manage_teachers')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'manage_teachers' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <UserCog className="h-5 w-5" />
+            <span>Manage Teachers</span>
           </button>
           <button
             onClick={() => setActiveTab('attendance')}
@@ -239,38 +252,196 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {errorMsg && (
+          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-center shadow-sm">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+            <p className="text-sm text-red-700 font-medium">{errorMsg}</p>
+          </div>
+        )}
+
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {activeTab === 'registration' && <RegistrationTab onSuccess={() => { showSuccess('Student registered successfully'); fetchStudents(); }} />}
-          {activeTab === 'full_registration' && <FullRegistrationTab onSuccess={() => { showSuccess('Student full registration successful. Confirmation email sent.'); fetchStudents(); }} />}
-          {activeTab === 'manage_students' && <ManageStudentsTab students={students} onSuccess={() => { showSuccess('Operation successful'); fetchStudents(); }} />}
-          {activeTab === 'attendance' && <AttendanceTab students={students} onSuccess={() => { showSuccess('Attendance saved successfully'); fetchStudents(); }} />}
-          {activeTab === 'fees' && <FeesTab students={students} onSuccess={() => { showSuccess('Fee record added successfully'); fetchStudents(); }} />}
+          {activeTab === 'registration' && <RegistrationTab onSuccess={() => { showSuccess('Student registered successfully'); fetchStudents(); }} showError={showError} />}
+          {activeTab === 'full_registration' && <FullRegistrationTab onSuccess={() => { showSuccess('Student full registration successful. Confirmation email sent.'); fetchStudents(); }} showError={showError} />}
+          {activeTab === 'manage_students' && <ManageStudentsTab students={students} onSuccess={() => { showSuccess('Operation successful'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'manage_teachers' && <ManageTeachersTab onSuccess={() => showSuccess('Teacher operation successful')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'attendance' && <AttendanceTab students={students} onSuccess={() => { showSuccess('Attendance saved successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'fees' && <FeesTab students={students} onSuccess={() => { showSuccess('Fee record added successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'idcards' && <IDCardsTab students={students} />}
-          {activeTab === 'marksheet_settings' && <MarksheetSettingsTab onSuccess={() => showSuccess('Marksheet settings updated!')} />}
-          {activeTab === 'results' && <ResultsTab students={students} onSuccess={() => { showSuccess('Result added successfully'); fetchStudents(); }} />}
-          {activeTab === 'content' && <ContentTab onSuccess={() => showSuccess('Content updated successfully')} />}
-          {activeTab === 'tests' && <TestsTab onSuccess={() => showSuccess('Question added successfully')} />}
-          {activeTab === 'security' && <SecurityTab onSuccess={() => showSuccess('Credentials updated successfully')} />}
-          {activeTab === 'email_settings' && <EmailSettingsTab onSuccess={() => showSuccess('Email settings updated successfully')} />}
-          {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} />}
-          {activeTab === 'qr_registration' && <QRScannerTab onSuccess={() => { showSuccess('Student registered via QR successfully'); fetchStudents(); }} />}
-          {activeTab === 'exam_schedule' && <ExamScheduleTab onSuccess={() => showSuccess('Exam schedule updated successfully')} />}
-          {activeTab === 'notice_panel' && <NoticePanelTab onSuccess={() => showSuccess('Notice updated successfully')} />}
+          {activeTab === 'marksheet_settings' && <MarksheetSettingsTab onSuccess={() => showSuccess('Marksheet settings updated!')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'results' && <ResultsTab students={students} onSuccess={() => { showSuccess('Result added successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'content' && <ContentTab onSuccess={() => showSuccess('Content updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'tests' && <TestsTab onSuccess={() => showSuccess('Question added successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'security' && <SecurityTab onSuccess={() => showSuccess('Credentials updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'email_settings' && <EmailSettingsTab onSuccess={() => showSuccess('Email settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'qr_registration' && <QRScannerTab onSuccess={() => { showSuccess('Student registered via QR successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'exam_schedule' && <ExamScheduleTab onSuccess={() => showSuccess('Exam schedule updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'notice_panel' && <NoticePanelTab onSuccess={() => showSuccess('Notice updated successfully')} showSuccess={showSuccess} showError={showError} />}
         </motion.div>
       </main>
     </div>
   );
 }
 
-const CLASSES = ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-const SUBJECTS = ['Hindi', 'English', 'Math', 'SST', 'Science'];
+export const CLASSES = ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+export const SUBJECTS = ['Hindi', 'English', 'Math', 'SST', 'Science'];
 
-function ThemeSettingsTab({ onSuccess }: { onSuccess: () => void }) {
+export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
+  const adminFetch = useAdminFetch();
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    username: '',
+    password: '',
+    permissions: [] as string[]
+  });
+
+  const PERMISSIONS = [
+    { id: 'manage_students', label: 'Manage Students' },
+    { id: 'attendance', label: 'Attendance' },
+    { id: 'fees', label: 'Fees Management' },
+    { id: 'results', label: 'Result Management' },
+    { id: 'notices', label: 'Notice Panel' },
+    { id: 'tests', label: 'Online Test Panel' },
+    { id: 'exam_schedule', label: 'Exam Schedule' }
+  ];
+
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      const res = await adminFetch('/api/admin/teachers');
+      const data = await res.json();
+      setTeachers(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePermissionChange = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      permissions: prev.permissions.includes(id)
+        ? prev.permissions.filter(p => p !== id)
+        : [...prev.permissions, id]
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminFetch('/api/admin/teachers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setFormData({ name: '', username: '', password: '', permissions: [] });
+        fetchTeachers();
+        onSuccess();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    // Removed confirm() for iframe compatibility
+    try {
+      const res = await adminFetch(`/api/admin/teachers/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (showSuccess) showSuccess('Teacher deleted successfully');
+        fetchTeachers();
+        onSuccess();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">Add New Teacher</h3>
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input required type="text" placeholder="Teacher Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+            <input required type="text" placeholder="Username" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+            <input required type="password" placeholder="Password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+          </div>
+          
+          <div>
+            <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-3">Assign Permissions</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {PERMISSIONS.map(p => (
+                <label key={p.id} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <input 
+                    type="checkbox" 
+                    checked={formData.permissions.includes(p.id)}
+                    onChange={() => handlePermissionChange(p.id)}
+                    className="rounded text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-slate-600 dark:text-slate-400">{p.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" className="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm">
+            Add Teacher
+          </button>
+        </form>
+      </div>
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">Teacher List</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b dark:border-slate-700">
+                <th className="p-4 font-bold text-slate-700 dark:text-slate-300">Name</th>
+                <th className="p-4 font-bold text-slate-700 dark:text-slate-300">Username</th>
+                <th className="p-4 font-bold text-slate-700 dark:text-slate-300">Permissions</th>
+                <th className="p-4 font-bold text-slate-700 dark:text-slate-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teachers.map(t => (
+                <tr key={t.id} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="p-4 text-slate-600 dark:text-slate-400">{t.name}</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-400">{t.username}</td>
+                  <td className="p-4">
+                    <div className="flex flex-wrap gap-1">
+                      {t.permissions?.map((p: string) => (
+                        <span key={p} className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
+                          {PERMISSIONS.find(perm => perm.id === p)?.label || p}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:text-red-700">
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ThemeSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const { settings, updateSettings } = useTheme();
   const [formData, setFormData] = useState({
@@ -378,7 +549,7 @@ function ThemeSettingsTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function QRScannerTab({ onSuccess }: { onSuccess: () => void }) {
+export function QRScannerTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -409,11 +580,10 @@ function QRScannerTab({ onSuccess }: { onSuccess: () => void }) {
           if (res.ok) {
             onSuccess();
           } else {
-            alert('Failed to register student from QR code.');
+            if (showError) showError('Failed to register student from QR code.');
           }
         } catch (err) {
-          console.error(err);
-          alert('Invalid QR code data.');
+          if (showError) showError('Invalid QR code data.');
         }
       },
       (errorMessage) => {
@@ -440,7 +610,7 @@ function QRScannerTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function ExamScheduleTab({ onSuccess }: { onSuccess: () => void }) {
+export function ExamScheduleTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [exams, setExams] = useState<any[]>([]);
   const [formData, setFormData] = useState({ class_name: '1', subject: '', date: '', time: '' });
@@ -492,7 +662,7 @@ function ExamScheduleTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function NoticePanelTab({ onSuccess }: { onSuccess: () => void }) {
+export function NoticePanelTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [notice, setNotice] = useState({ title: '', pdf_url: '' });
   const [notices, setNotices] = useState<any[]>([]);
@@ -513,7 +683,7 @@ function NoticePanelTab({ onSuccess }: { onSuccess: () => void }) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 500 * 1024) {
-        alert('PDF size is too large. Please upload a file smaller than 500KB.');
+        if (showError) showError('PDF size is too large. Please upload a file smaller than 500KB.');
         e.target.value = '';
         return;
       }
@@ -537,28 +707,29 @@ function NoticePanelTab({ onSuccess }: { onSuccess: () => void }) {
         onSuccess();
         setNotice({ title: '', pdf_url: '' });
         fetchNotices();
+        if (showSuccess) showSuccess('Notice uploaded successfully');
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to upload notice.');
+        if (showError) showError(data.error || 'Failed to upload notice.');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while uploading the notice.');
+      if (showError) showError('An error occurred while uploading the notice.');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this notice?')) return;
     try {
       const res = await adminFetch(`/api/admin/notices/${id}`, { method: 'DELETE' });
       if (res.ok) {
         fetchNotices();
+        if (showSuccess) showSuccess('Notice deleted successfully');
       } else {
-        alert('Failed to delete notice.');
+        if (showError) showError('Failed to delete notice.');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while deleting the notice.');
+      if (showError) showError('An error occurred while deleting the notice.');
     }
   };
 
@@ -586,7 +757,7 @@ function NoticePanelTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
+function RegistrationTab({ onSuccess, showError }: { onSuccess: () => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [formData, setFormData] = useState({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
 
@@ -594,7 +765,7 @@ function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 500 * 1024) {
-        alert('Photo size is too large. Please upload an image smaller than 500KB.');
+        if (showError) showError('Photo size is too large. Please upload an image smaller than 500KB.');
         e.target.value = '';
         return;
       }
@@ -618,7 +789,7 @@ function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
         onSuccess();
         setFormData({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
       } else {
-        alert('Failed to register student. Roll number might already exist for this class.');
+        if (showError) showError('Failed to register student. Roll number might already exist for this class.');
       }
     } catch (err) {
       console.error(err);
@@ -670,7 +841,7 @@ function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function ResultsTab({ students, onSuccess }: { students: any[], onSuccess: () => void }) {
+export function ResultsTab({ students, onSuccess, showSuccess, showError }: { students: any[], onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [studentId, setStudentId] = useState('');
   const [isPublished, setIsPublished] = useState(false);
@@ -696,11 +867,11 @@ function ResultsTab({ students, onSuccess }: { students: any[], onSuccess: () =>
       });
       if (res.ok) {
         setIsPublished(!isPublished);
-        alert(`Results have been ${!isPublished ? 'published' : 'unpublished'} successfully.`);
+        if (showSuccess) showSuccess(`Results have been ${!isPublished ? 'published' : 'unpublished'} successfully.`);
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to update publish status.');
+      if (showError) showError('Failed to update publish status.');
     }
   };
 
@@ -783,7 +954,7 @@ function ResultsTab({ students, onSuccess }: { students: any[], onSuccess: () =>
   );
 }
 
-function ContentTab({ onSuccess }: { onSuccess: () => void }) {
+function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [logoUrl, setLogoUrl] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
@@ -1108,7 +1279,7 @@ function ContentTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function SecurityTab({ onSuccess }: { onSuccess: () => void }) {
+function SecurityTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -1167,7 +1338,7 @@ function SecurityTab({ onSuccess }: { onSuccess: () => void }) {
         setToken('');
         onSuccess();
       } else {
-        alert('Invalid token');
+        if (showError) showError('Invalid token');
       }
     } catch (err) {
       console.error(err);
@@ -1280,7 +1451,7 @@ function SecurityTab({ onSuccess }: { onSuccess: () => void }) {
     </div>
   );
 }
-function TestsTab({ onSuccess }: { onSuccess: () => void }) {
+export function TestsTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [formData, setFormData] = useState({ class_name: '1', subject: '', title: '', link: '' });
   const [testLinks, setTestLinks] = useState<any[]>([]);
@@ -1319,10 +1490,11 @@ function TestsTab({ onSuccess }: { onSuccess: () => void }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this test link?')) return;
+    if (window.confirm && !window.confirm('Are you sure you want to delete this test link?')) return;
     try {
       const res = await adminFetch(`/api/admin/test-links/${id}`, { method: 'DELETE' });
       if (res.ok) {
+        if (showSuccess) showSuccess('Test link deleted successfully');
         fetchTestLinks();
       }
     } catch (err) {
@@ -1339,11 +1511,11 @@ function TestsTab({ onSuccess }: { onSuccess: () => void }) {
         body: JSON.stringify(marksData)
       });
       if (res.ok) {
-        alert('Marks added successfully!');
+        if (showSuccess) showSuccess('Marks added successfully!');
         setMarksData({ ...marksData, roll_no: '', score: '' });
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to add marks');
+        if (showError) showError(data.error || 'Failed to add marks');
       }
     } catch (err) {
       console.error(err);
@@ -1501,7 +1673,7 @@ function TestsTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function EmailSettingsTab({ onSuccess }: { onSuccess: () => void }) {
+function EmailSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [settings, setSettings] = useState({
     smtp_host: '',
@@ -1579,7 +1751,7 @@ function EmailSettingsTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
+function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [formData, setFormData] = useState({ 
     name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', 
@@ -1591,7 +1763,7 @@ function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 500 * 1024) {
-        alert('Photo size is too large. Please upload an image smaller than 500KB.');
+        if (showError) showError('Photo size is too large. Please upload an image smaller than 500KB.');
         e.target.value = '';
         return;
       }
@@ -1615,7 +1787,7 @@ function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
       const data = await res.json();
       if (res.ok) {
         if (data.emailError) {
-          alert(`Student registered successfully, but email failed: ${data.emailError}`);
+          if (showError) showError(`Student registered successfully, but email failed: ${data.emailError}`);
         } else {
           onSuccess();
         }
@@ -1624,7 +1796,7 @@ function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
           email: '', phone: '', dob: '', gender: 'Male', address: '', photo_url: ''
         });
       } else {
-        alert(data.error || 'Failed to register student. Roll number might already exist for this class.');
+        if (showError) showError(data.error || 'Failed to register student. Roll number might already exist for this class.');
       }
     } catch (err) {
       console.error(err);
@@ -1720,7 +1892,7 @@ function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function AttendanceTab({ students, onSuccess }: { students: any[], onSuccess: () => void }) {
+export function AttendanceTab({ students, onSuccess, showSuccess, showError }: { students: any[], onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [className, setClassName] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -1806,7 +1978,7 @@ function AttendanceTab({ students, onSuccess }: { students: any[], onSuccess: ()
   );
 }
 
-function FeesTab({ students, onSuccess }: { students: any[], onSuccess: () => void }) {
+export function FeesTab({ students, onSuccess, showSuccess, showError }: { students: any[], onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [studentId, setStudentId] = useState('');
   const [amount, setAmount] = useState('');
@@ -2018,7 +2190,7 @@ function IDCardsTab({ students }: { students: any[] }) {
   );
 }
 
-function MarksheetSettingsTab({ onSuccess }: { onSuccess: () => void }) {
+function MarksheetSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [settings, setSettings] = useState({
     marksheet_heading: '',
@@ -2121,7 +2293,7 @@ function MarksheetSettingsTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function ManageStudentsTab({ students, onSuccess }: { students: any[], onSuccess: () => void }) {
+export function ManageStudentsTab({ students, onSuccess, showSuccess, showError }: { students: any[], onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [selectedClass, setSelectedClass] = useState('1');
   const [targetClass, setTargetClass] = useState('2');
@@ -2148,53 +2320,53 @@ function ManageStudentsTab({ students, onSuccess }: { students: any[], onSuccess
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete student "${name}"? This will remove their record permanently.`)) {
-      try {
-        const res = await adminFetch(`/api/admin/students/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          onSuccess();
-        } else {
-          alert('Failed to delete student');
-        }
-      } catch (err) {
-        console.error(err);
+    try {
+      const res = await adminFetch(`/api/admin/students/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        onSuccess();
+        if (showSuccess) showSuccess(`Student "${name}" deleted successfully`);
+      } else {
+        if (showError) showError('Failed to delete student');
       }
+    } catch (err) {
+      console.error(err);
+      if (showError) showError('An error occurred while deleting the student');
     }
   };
 
   const handlePromote = async () => {
     if (selectedStudents.length === 0) {
-      alert('Please select at least one student to promote');
+      if (showError) showError('Please select at least one student to promote');
       return;
     }
     if (selectedClass === targetClass) {
-      alert('Target class must be different from current class');
+      if (showError) showError('Target class must be different from current class');
       return;
     }
 
-    if (window.confirm(`Promote ${selectedStudents.length} students from Class ${selectedClass} to Class ${targetClass}?`)) {
-      setIsPromoting(true);
-      try {
-        const res = await adminFetch('/api/admin/students/promote', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studentIds: selectedStudents,
-            targetClass
-          })
-        });
-        if (res.ok) {
-          setSelectedStudents([]);
-          onSuccess();
-        } else {
-          const data = await res.json();
-          alert(data.error || 'Failed to promote students');
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsPromoting(false);
+    setIsPromoting(true);
+    try {
+      const res = await adminFetch('/api/admin/students/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentIds: selectedStudents,
+          targetClass
+        })
+      });
+      if (res.ok) {
+        setSelectedStudents([]);
+        onSuccess();
+        if (showSuccess) showSuccess(`Promoted ${selectedStudents.length} students successfully`);
+      } else {
+        const data = await res.json();
+        if (showError) showError(data.error || 'Failed to promote students');
       }
+    } catch (err) {
+      console.error(err);
+      if (showError) showError('An error occurred while promoting students');
+    } finally {
+      setIsPromoting(false);
     }
   };
 
