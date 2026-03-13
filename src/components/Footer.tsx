@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Footer() {
+  const { settings: themeSettings } = useTheme();
   const [contact, setContact] = useState({
     address: 'Brahampur, Jale\nDarbhanga, Bihar 847307',
     email: 'info@uniquescienceacademy.in',
@@ -23,11 +25,11 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-slate-900 text-slate-300 py-8 border-t-4 border-blue-800 print:hidden">
+    <footer className="bg-slate-900 dark:bg-black text-slate-300 py-8 border-t-4 print:hidden transition-colors duration-300" style={{ borderTopColor: themeSettings.primaryColor }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-white text-lg font-bold mb-4 uppercase tracking-wider">Unique Science Academy</h3>
+            <h3 className="text-white text-lg font-bold mb-4 uppercase tracking-wider">{themeSettings.schoolName}</h3>
             <p className="text-sm leading-relaxed text-slate-400">
               Providing quality education and fostering a culture of excellence in Brahampur, Jale, Darbhanga.
             </p>
@@ -35,9 +37,9 @@ export default function Footer() {
           <div>
             <h3 className="text-white text-lg font-bold mb-4 uppercase tracking-wider">Quick Links</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="/" className="hover:text-yellow-400 transition-colors">Home</a></li>
-              <li><a href="/student/login" className="hover:text-yellow-400 transition-colors">Student Portal</a></li>
-              <li><a href="/admin/login" className="hover:text-yellow-400 transition-colors">Admin Login</a></li>
+              <li><a href="/" className="hover:opacity-80 transition-opacity" style={{ color: themeSettings.accentColor }}>Home</a></li>
+              <li><a href="/student/login" className="hover:opacity-80 transition-opacity" style={{ color: themeSettings.accentColor }}>Student Portal</a></li>
+              <li><a href="/admin/login" className="hover:opacity-80 transition-opacity" style={{ color: themeSettings.accentColor }}>Admin Login</a></li>
             </ul>
           </div>
           <div>
@@ -52,7 +54,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
-          <p>&copy; {new Date().getFullYear()} Unique Science Academy, Brahampur. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {themeSettings.schoolName}. All rights reserved.</p>
         </div>
       </div>
     </footer>

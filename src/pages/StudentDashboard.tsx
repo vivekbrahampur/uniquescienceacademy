@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard } from 'lucide-react';
+import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell } from 'lucide-react';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -70,6 +70,13 @@ export default function StudentDashboard() {
             <span>Online Test</span>
           </button>
           <button
+            onClick={() => setActiveTab('notices')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'notices' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+          >
+            <Bell className="h-5 w-5" />
+            <span>Notices</span>
+          </button>
+          <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-600 transition-colors mt-8 text-red-200 hover:text-white"
           >
@@ -92,8 +99,53 @@ export default function StudentDashboard() {
           {activeTab === 'fees' && <FeesTab student={student} />}
           {activeTab === 'idcard' && <IDCardTab student={student} />}
           {activeTab === 'test' && <TestTab student={student} />}
+          {activeTab === 'notices' && <NoticesTab />}
         </motion.div>
       </main>
+    </div>
+  );
+}
+
+function NoticesTab() {
+  const [notices, setNotices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/student/notices')
+      .then(res => res.json())
+      .then(data => {
+        setNotices(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="text-center py-10">Loading notices...</div>;
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+      <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Latest Notices</h3>
+      {notices.length === 0 ? (
+        <p className="text-slate-500 text-center py-10">No notices available.</p>
+      ) : (
+        <div className="space-y-4">
+          {notices.map(notice => (
+            <div key={notice.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-center space-x-4">
+                <FileText className="h-6 w-6 text-blue-800" />
+                <div>
+                  <h4 className="font-bold text-slate-900">{notice.title}</h4>
+                  <p className="text-xs text-slate-500">{new Date(notice.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <a href={notice.pdf_url} target="_blank" rel="noopener noreferrer" className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-900">View PDF</a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -116,12 +168,30 @@ function ResultsTab({ student }: { student: any }) {
   const [isPublished, setIsPublished] = useState(false);
   const [loading, setLoading] = useState(true);
   const [logoUrl, setLogoUrl] = useState('');
+  const [schoolName, setSchoolName] = useState('Unique Science Academy');
+  const [marksheetHeading, setMarksheetHeading] = useState('Report Card (Term-2)');
+  const [marksheetSubheading, setMarksheetSubheading] = useState('');
+  const [marksheetAffiliationNo, setMarksheetAffiliationNo] = useState('1548G');
+  const [marksheetSchoolCode, setMarksheetSchoolCode] = useState('1548');
+  const [marksheetAddress, setMarksheetAddress] = useState('Brahampur, Jale, Darbhanga, Bihar 847307');
+  const [marksheetPhone, setMarksheetPhone] = useState('(0542)-XXXXXXX');
+  const [marksheetWebsite, setMarksheetWebsite] = useState('www.uniquescienceacademy.in');
+  const [marksheetEmail, setMarksheetEmail] = useState('info@uniquescienceacademy.in');
 
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
         if (data.logo_url) setLogoUrl(data.logo_url);
+        if (data.school_name) setSchoolName(data.school_name);
+        if (data.marksheet_heading) setMarksheetHeading(data.marksheet_heading);
+        if (data.marksheet_subheading) setMarksheetSubheading(data.marksheet_subheading);
+        if (data.marksheet_affiliation_no) setMarksheetAffiliationNo(data.marksheet_affiliation_no);
+        if (data.marksheet_school_code) setMarksheetSchoolCode(data.marksheet_school_code);
+        if (data.marksheet_address) setMarksheetAddress(data.marksheet_address);
+        if (data.marksheet_phone) setMarksheetPhone(data.marksheet_phone);
+        if (data.marksheet_website) setMarksheetWebsite(data.marksheet_website);
+        if (data.marksheet_email) setMarksheetEmail(data.marksheet_email);
       })
       .catch(console.error);
 
@@ -185,21 +255,22 @@ function ResultsTab({ student }: { student: any }) {
           {logoUrl && <img src={logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
           <div className="text-center flex-1 px-4">
             <div className="flex justify-between text-xs font-bold mb-1">
-              <span>Affiliation No : 1548G</span>
-              <span>School Code : 1548</span>
+              <span>Affiliation No : {marksheetAffiliationNo}</span>
+              <span>School Code : {marksheetSchoolCode}</span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-wide">Unique Science Academy</h1>
+            <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-wide">{schoolName}</h1>
             <p className="text-sm text-slate-700 font-semibold italic">A Sr. Sec. School Affiliated To CBSE New Delhi</p>
-            <p className="text-sm text-slate-700 font-semibold">Brahampur, Jale, Darbhanga, Bihar 847307</p>
-            <p className="text-sm text-slate-700 font-semibold">(0542)-XXXXXXX</p>
-            <p className="text-sm text-slate-700 font-semibold">School Website: www.uniquescienceacademy.in</p>
+            <p className="text-sm text-slate-700 font-semibold">{marksheetAddress}</p>
+            <p className="text-sm text-slate-700 font-semibold">{marksheetPhone}</p>
+            <p className="text-sm text-slate-700 font-semibold">School Website: {marksheetWebsite}</p>
           </div>
           {logoUrl && <img src={logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
         </div>
 
         {/* Title */}
         <div className="text-center mb-6 relative z-10">
-          <h2 className="text-2xl font-bold text-slate-800 border-2 border-slate-800 inline-block px-8 py-1 uppercase">Report Card (Term-2)</h2>
+          <h2 className="text-2xl font-bold text-slate-800 border-2 border-slate-800 inline-block px-8 py-1 uppercase">{marksheetHeading}</h2>
+          {marksheetSubheading && <p className="text-sm font-bold text-slate-700 mt-1">{marksheetSubheading}</p>}
           <div className="mt-2 font-bold text-slate-800">
             Class : {student.class_name} &nbsp;&nbsp;&nbsp; Section : A &nbsp;&nbsp;&nbsp; Session : 2026-27
           </div>

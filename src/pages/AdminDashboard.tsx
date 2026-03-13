@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard } from 'lucide-react';
+import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, QrCode } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -69,6 +71,8 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<any[]>([]);
   const [successMsg, setSuccessMsg] = useState('');
 
+  const { settings: themeSettings, updateSettings } = useTheme();
+
   useEffect(() => {
     if (!localStorage.getItem('adminAuth')) {
       navigate('/admin/login');
@@ -99,80 +103,122 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-blue-900 text-white shadow-xl">
-        <div className="p-6 border-b border-blue-800">
+      <aside className="w-full md:w-64 bg-primary text-white shadow-xl transition-colors duration-300 dark:bg-slate-900 dark:border-r dark:border-slate-800">
+        <div className="p-6 border-b border-white/10 dark:border-slate-800">
           <h2 className="text-xl font-bold uppercase tracking-wider">Admin Panel</h2>
         </div>
         <nav className="p-4 space-y-2">
           <button
             onClick={() => setActiveTab('registration')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'registration' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'registration' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <UserPlus className="h-5 w-5" />
             <span>Quick Registration</span>
           </button>
           <button
             onClick={() => setActiveTab('full_registration')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'full_registration' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'full_registration' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <UserCheck className="h-5 w-5" />
             <span>Full Registration</span>
           </button>
           <button
+            onClick={() => setActiveTab('manage_students')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'manage_students' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <Users className="h-5 w-5" />
+            <span>Manage Students</span>
+          </button>
+          <button
             onClick={() => setActiveTab('attendance')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'attendance' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'attendance' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <CalendarCheck className="h-5 w-5" />
             <span>Attendance</span>
           </button>
           <button
             onClick={() => setActiveTab('fees')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'fees' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'fees' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <IndianRupee className="h-5 w-5" />
             <span>Fees Management</span>
           </button>
           <button
             onClick={() => setActiveTab('idcards')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'idcards' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'idcards' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <IdCard className="h-5 w-5" />
             <span>ID Cards</span>
           </button>
           <button
+            onClick={() => setActiveTab('marksheet_settings')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'marksheet_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <FileText className="h-5 w-5" />
+            <span>Marksheet Settings</span>
+          </button>
+          <button
             onClick={() => setActiveTab('results')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'results' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'results' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <FileSpreadsheet className="h-5 w-5" />
             <span>Result Management</span>
           </button>
           <button
             onClick={() => setActiveTab('content')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <ImageIcon className="h-5 w-5" />
             <span>Content Control</span>
           </button>
           <button
             onClick={() => setActiveTab('tests')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'tests' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'tests' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <FileQuestion className="h-5 w-5" />
             <span>Online Test Panel</span>
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'security' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'security' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Shield className="h-5 w-5" />
             <span>Security</span>
           </button>
           <button
             onClick={() => setActiveTab('email_settings')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'email_settings' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'email_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Mail className="h-5 w-5" />
             <span>Email Settings</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('theme_settings')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'theme_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <Palette className="h-5 w-5" />
+            <span>Theme Settings</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('qr_registration')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'qr_registration' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <QrCode className="h-5 w-5" />
+            <span>QR Registration</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('exam_schedule')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'exam_schedule' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <CalendarCheck className="h-5 w-5" />
+            <span>Exam Schedule</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('notice_panel')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'notice_panel' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <FileText className="h-5 w-5" />
+            <span>Notice Panel</span>
           </button>
           <button
             onClick={handleLogout}
@@ -201,14 +247,20 @@ export default function AdminDashboard() {
         >
           {activeTab === 'registration' && <RegistrationTab onSuccess={() => { showSuccess('Student registered successfully'); fetchStudents(); }} />}
           {activeTab === 'full_registration' && <FullRegistrationTab onSuccess={() => { showSuccess('Student full registration successful. Confirmation email sent.'); fetchStudents(); }} />}
-          {activeTab === 'attendance' && <AttendanceTab students={students} onSuccess={() => showSuccess('Attendance saved successfully')} />}
-          {activeTab === 'fees' && <FeesTab students={students} onSuccess={() => showSuccess('Fee record added successfully')} />}
+          {activeTab === 'manage_students' && <ManageStudentsTab students={students} onSuccess={() => { showSuccess('Operation successful'); fetchStudents(); }} />}
+          {activeTab === 'attendance' && <AttendanceTab students={students} onSuccess={() => { showSuccess('Attendance saved successfully'); fetchStudents(); }} />}
+          {activeTab === 'fees' && <FeesTab students={students} onSuccess={() => { showSuccess('Fee record added successfully'); fetchStudents(); }} />}
           {activeTab === 'idcards' && <IDCardsTab students={students} />}
-          {activeTab === 'results' && <ResultsTab students={students} onSuccess={() => showSuccess('Result added successfully')} />}
+          {activeTab === 'marksheet_settings' && <MarksheetSettingsTab onSuccess={() => showSuccess('Marksheet settings updated!')} />}
+          {activeTab === 'results' && <ResultsTab students={students} onSuccess={() => { showSuccess('Result added successfully'); fetchStudents(); }} />}
           {activeTab === 'content' && <ContentTab onSuccess={() => showSuccess('Content updated successfully')} />}
           {activeTab === 'tests' && <TestsTab onSuccess={() => showSuccess('Question added successfully')} />}
           {activeTab === 'security' && <SecurityTab onSuccess={() => showSuccess('Credentials updated successfully')} />}
           {activeTab === 'email_settings' && <EmailSettingsTab onSuccess={() => showSuccess('Email settings updated successfully')} />}
+          {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} />}
+          {activeTab === 'qr_registration' && <QRScannerTab onSuccess={() => { showSuccess('Student registered via QR successfully'); fetchStudents(); }} />}
+          {activeTab === 'exam_schedule' && <ExamScheduleTab onSuccess={() => showSuccess('Exam schedule updated successfully')} />}
+          {activeTab === 'notice_panel' && <NoticePanelTab onSuccess={() => showSuccess('Notice updated successfully')} />}
         </motion.div>
       </main>
     </div>
@@ -218,9 +270,325 @@ export default function AdminDashboard() {
 const CLASSES = ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 const SUBJECTS = ['Hindi', 'English', 'Math', 'SST', 'Science'];
 
+function ThemeSettingsTab({ onSuccess }: { onSuccess: () => void }) {
+  const adminFetch = useAdminFetch();
+  const { settings, updateSettings } = useTheme();
+  const [formData, setFormData] = useState({
+    primaryColor: settings.primaryColor,
+    secondaryColor: settings.secondaryColor,
+    accentColor: settings.accentColor,
+    schoolName: settings.schoolName
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminFetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          primary_color: formData.primaryColor,
+          secondary_color: formData.secondaryColor,
+          accent_color: formData.accentColor,
+          school_name: formData.schoolName
+        })
+      });
+      if (res.ok) {
+        updateSettings(formData);
+        onSuccess();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">Website Theme Settings</h3>
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">School Name</label>
+            <input 
+              type="text" 
+              value={formData.schoolName} 
+              onChange={e => setFormData({...formData, schoolName: e.target.value})} 
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Primary Color</label>
+            <div className="flex space-x-2">
+              <input 
+                type="color" 
+                value={formData.primaryColor} 
+                onChange={e => setFormData({...formData, primaryColor: e.target.value})} 
+                className="h-10 w-20 border border-slate-300 rounded-lg cursor-pointer" 
+              />
+              <input 
+                type="text" 
+                value={formData.primaryColor} 
+                onChange={e => setFormData({...formData, primaryColor: e.target.value})} 
+                className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg" 
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Secondary Color</label>
+            <div className="flex space-x-2">
+              <input 
+                type="color" 
+                value={formData.secondaryColor} 
+                onChange={e => setFormData({...formData, secondaryColor: e.target.value})} 
+                className="h-10 w-20 border border-slate-300 rounded-lg cursor-pointer" 
+              />
+              <input 
+                type="text" 
+                value={formData.secondaryColor} 
+                onChange={e => setFormData({...formData, secondaryColor: e.target.value})} 
+                className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg" 
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Accent Color</label>
+            <div className="flex space-x-2">
+              <input 
+                type="color" 
+                value={formData.accentColor} 
+                onChange={e => setFormData({...formData, accentColor: e.target.value})} 
+                className="h-10 w-20 border border-slate-300 rounded-lg cursor-pointer" 
+              />
+              <input 
+                type="text" 
+                value={formData.accentColor} 
+                onChange={e => setFormData({...formData, accentColor: e.target.value})} 
+                className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg" 
+              />
+            </div>
+          </div>
+        </div>
+        <div className="pt-4">
+          <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">
+            Save Theme Settings
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function QRScannerTab({ onSuccess }: { onSuccess: () => void }) {
+  const adminFetch = useAdminFetch();
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const [scanning, setScanning] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error);
+      }
+    };
+  }, []);
+
+  const startScanning = () => {
+    setScanning(true);
+    const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 }, false);
+    scannerRef.current = scanner;
+    scanner.render(
+      async (decodedText) => {
+        setScanning(false);
+        scanner.clear().catch(console.error);
+        try {
+          const studentData = JSON.parse(decodedText);
+          const res = await adminFetch('/api/admin/students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData)
+          });
+          if (res.ok) {
+            onSuccess();
+          } else {
+            alert('Failed to register student from QR code.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Invalid QR code data.');
+        }
+      },
+      (errorMessage) => {
+        console.log(errorMessage);
+      }
+    );
+  };
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">QR Student Registration</h3>
+      {!scanning ? (
+        <button 
+          onClick={startScanning}
+          className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm flex items-center"
+        >
+          <QrCode className="mr-2 h-5 w-5" />
+          Start QR Scanner
+        </button>
+      ) : (
+        <div id="qr-reader" className="w-full max-w-md"></div>
+      )}
+    </div>
+  );
+}
+
+function ExamScheduleTab({ onSuccess }: { onSuccess: () => void }) {
+  const adminFetch = useAdminFetch();
+  const [exams, setExams] = useState<any[]>([]);
+  const [formData, setFormData] = useState({ class_name: '1', subject: '', date: '', time: '' });
+
+  useEffect(() => {
+    adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+  }, [adminFetch]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await adminFetch('/api/admin/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    if (res.ok) {
+      onSuccess();
+      adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+      setFormData({ class_name: '1', subject: '', date: '', time: '' });
+    }
+  };
+
+  const deleteExam = async (id: string) => {
+    await adminFetch(`/api/admin/exams/${id}`, { method: 'DELETE' });
+    adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+  };
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800 space-y-8">
+      <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">Manage Exam Schedule</h3>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <select value={formData.class_name} onChange={e => setFormData({...formData, class_name: e.target.value})} className="px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white">
+          {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <input required type="text" placeholder="Subject" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+        <input required type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+        <input required type="time" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+        <button type="submit" className="bg-blue-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-900">Add Exam</button>
+      </form>
+      <div className="space-y-2">
+        {exams.map(exam => (
+          <div key={exam.id} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+            <span>{exam.class_name} - {exam.subject} ({exam.date} {exam.time})</span>
+            <button onClick={() => deleteExam(exam.id)} className="text-red-500 hover:text-red-700"><Trash2 className="h-5 w-5" /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NoticePanelTab({ onSuccess }: { onSuccess: () => void }) {
+  const adminFetch = useAdminFetch();
+  const [notice, setNotice] = useState({ title: '', pdf_url: '' });
+  const [notices, setNotices] = useState<any[]>([]);
+
+  const fetchNotices = async () => {
+    const res = await adminFetch('/api/student/notices');
+    if (res.ok) {
+      const data = await res.json();
+      setNotices(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotices();
+  }, [adminFetch]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 500 * 1024) {
+        alert('PDF size is too large. Please upload a file smaller than 500KB.');
+        e.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNotice({ ...notice, pdf_url: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminFetch('/api/admin/notice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notice)
+      });
+      if (res.ok) {
+        onSuccess();
+        setNotice({ title: '', pdf_url: '' });
+        fetchNotices();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to upload notice.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while uploading the notice.');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this notice?')) return;
+    try {
+      const res = await adminFetch(`/api/admin/notices/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchNotices();
+      } else {
+        alert('Failed to delete notice.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while deleting the notice.');
+    }
+  };
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800 space-y-8">
+      <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">Manage Notice Panel</h3>
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+        <input required type="text" placeholder="Notice Title" value={notice.title} onChange={e => setNotice({...notice, title: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+        <input required type="file" accept="application/pdf" onChange={handleFileUpload} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+        <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors">Upload Notice</button>
+      </form>
+
+      <div className="mt-8">
+        <h4 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Existing Notices</h4>
+        <div className="space-y-4">
+          {notices.map(n => (
+            <div key={n.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+              <span className="text-slate-800 dark:text-white font-medium">{n.title}</span>
+              <button onClick={() => handleDelete(n.id)} className="text-red-600 hover:text-red-800 font-medium">Delete</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
   const adminFetch = useAdminFetch();
-  const [formData, setFormData] = useState({ name: '', father_name: '', class_name: '1', roll_no: '', photo_url: '' });
+  const [formData, setFormData] = useState({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -248,7 +616,7 @@ function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
       });
       if (res.ok) {
         onSuccess();
-        setFormData({ name: '', father_name: '', class_name: '1', roll_no: '', photo_url: '' });
+        setFormData({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
       } else {
         alert('Failed to register student. Roll number might already exist for this class.');
       }
@@ -278,6 +646,10 @@ function RegistrationTab({ onSuccess }: { onSuccess: () => void }) {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Father's Name</label>
             <input required type="text" value={formData.father_name} onChange={e => setFormData({...formData, father_name: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Mother's Name</label>
+            <input required type="text" value={formData.mother_name} onChange={e => setFormData({...formData, mother_name: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Class</label>
@@ -740,6 +1112,19 @@ function SecurityTab({ onSuccess }: { onSuccess: () => void }) {
   const adminFetch = useAdminFetch();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [setupData, setSetupData] = useState<{ secret: string; qrCode: string } | null>(null);
+  const [token, setToken] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminFetch('/api/admin/settings')
+      .then(res => res.json())
+      .then(data => {
+        setTwoFactorEnabled(data.two_factor_enabled || false);
+        setLoading(false);
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -759,20 +1144,139 @@ function SecurityTab({ onSuccess }: { onSuccess: () => void }) {
     }
   };
 
+  const handleSetup2FA = async () => {
+    try {
+      const res = await adminFetch('/api/admin/2fa/setup', { method: 'POST' });
+      const data = await res.json();
+      setSetupData(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    try {
+      const res = await adminFetch('/api/admin/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: setupData?.secret, token })
+      });
+      if (res.ok) {
+        setTwoFactorEnabled(true);
+        setSetupData(null);
+        setToken('');
+        onSuccess();
+      } else {
+        alert('Invalid token');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    try {
+      const res = await adminFetch('/api/admin/2fa/disable', { method: 'POST' });
+      if (res.ok) {
+        setTwoFactorEnabled(false);
+        onSuccess();
+      } else {
+        console.error('Failed to disable 2FA.');
+      }
+    } catch (err) {
+      console.error('An error occurred while disabling 2FA.', err);
+    }
+  };
+
+  if (loading) return <div className="p-8">Loading security settings...</div>;
+
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-      <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Update Admin Credentials</h3>
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">New Username</label>
-          <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Leave blank to keep current" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Leave blank to keep current" />
-        </div>
-        <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">Update Credentials</button>
-      </form>
+    <div className="space-y-8">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Update Admin Credentials</h3>
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">New Username</label>
+            <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Leave blank to keep current" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Leave blank to keep current" />
+          </div>
+          <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">Update Credentials</button>
+        </form>
+      </div>
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4 flex items-center">
+          <Shield className="mr-2 h-6 w-6 text-blue-600" />
+          Two-Factor Authentication (2FA)
+        </h3>
+        
+        {twoFactorEnabled ? (
+          <div className="space-y-4">
+            <div className="flex items-center text-green-600 font-medium">
+              <CheckCircle className="mr-2 h-5 w-5" />
+              2FA is currently enabled
+            </div>
+            <p className="text-sm text-slate-600">Your account is protected with an additional layer of security.</p>
+            <button 
+              onClick={handleDisable2FA}
+              className="text-red-600 hover:text-red-800 text-sm font-medium"
+            >
+              Disable 2FA
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <p className="text-slate-600">Enhance your account security by requiring a 6-digit code from an authenticator app (like Google Authenticator or Authy) when logging in.</p>
+            
+            {!setupData ? (
+              <button 
+                onClick={handleSetup2FA}
+                className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm"
+              >
+                Setup 2FA
+              </button>
+            ) : (
+              <div className="space-y-6 p-6 bg-slate-50 rounded-xl border border-slate-200 max-w-md">
+                <div className="text-center">
+                  <p className="text-sm font-medium text-slate-700 mb-4">1. Scan this QR code with your authenticator app:</p>
+                  <img src={setupData.qrCode} alt="2FA QR Code" className="mx-auto border-4 border-white shadow-sm rounded-lg" />
+                  <p className="mt-4 text-xs text-slate-500">Or enter manually: <code className="bg-white px-2 py-1 rounded border">{setupData.secret}</code></p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-slate-700 mb-2">2. Enter the 6-digit code to verify:</p>
+                  <div className="flex space-x-3">
+                    <input 
+                      type="text" 
+                      maxLength={6}
+                      value={token}
+                      onChange={e => setToken(e.target.value)}
+                      className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-center font-mono text-xl tracking-widest"
+                      placeholder="000000"
+                    />
+                    <button 
+                      onClick={handleVerify2FA}
+                      className="bg-blue-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-900 transition-colors"
+                    >
+                      Verify
+                    </button>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={() => setSetupData(null)}
+                  className="text-slate-500 hover:text-slate-700 text-xs w-full text-center"
+                >
+                  Cancel Setup
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -814,7 +1318,7 @@ function TestsTab({ onSuccess }: { onSuccess: () => void }) {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this test link?')) return;
     try {
       const res = await adminFetch(`/api/admin/test-links/${id}`, { method: 'DELETE' });
@@ -1078,7 +1582,7 @@ function EmailSettingsTab({ onSuccess }: { onSuccess: () => void }) {
 function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
   const adminFetch = useAdminFetch();
   const [formData, setFormData] = useState({ 
-    name: '', father_name: '', class_name: '1', roll_no: '', 
+    name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', 
     email: '', phone: '', dob: '', gender: 'Male', address: '', photo_url: ''
   });
   const [loading, setLoading] = useState(false);
@@ -1116,7 +1620,7 @@ function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
           onSuccess();
         }
         setFormData({ 
-          name: '', father_name: '', class_name: '1', roll_no: '', 
+          name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', 
           email: '', phone: '', dob: '', gender: 'Male', address: '', photo_url: ''
         });
       } else {
@@ -1155,6 +1659,10 @@ function FullRegistrationTab({ onSuccess }: { onSuccess: () => void }) {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Father's Name *</label>
             <input required type="text" value={formData.father_name} onChange={e => setFormData({...formData, father_name: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Mother's Name *</label>
+            <input required type="text" value={formData.mother_name} onChange={e => setFormData({...formData, mother_name: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
           </div>
         </div>
         
@@ -1506,6 +2014,336 @@ function IDCardsTab({ students }: { students: any[] }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function MarksheetSettingsTab({ onSuccess }: { onSuccess: () => void }) {
+  const adminFetch = useAdminFetch();
+  const [settings, setSettings] = useState({
+    marksheet_heading: '',
+    marksheet_subheading: '',
+    marksheet_affiliation_no: '',
+    marksheet_school_code: '',
+    marksheet_address: '',
+    marksheet_phone: '',
+    marksheet_website: '',
+    marksheet_email: '',
+    school_name: ''
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        setSettings({
+          marksheet_heading: data.marksheet_heading || '',
+          marksheet_subheading: data.marksheet_subheading || '',
+          marksheet_affiliation_no: data.marksheet_affiliation_no || '',
+          marksheet_school_code: data.marksheet_school_code || '',
+          marksheet_address: data.marksheet_address || '',
+          marksheet_phone: data.marksheet_phone || '',
+          marksheet_website: data.marksheet_website || '',
+          marksheet_email: data.marksheet_email || '',
+          school_name: data.school_name || ''
+        });
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminFetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) onSuccess();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) return <div className="p-8">Loading settings...</div>;
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+      <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Marksheet Text Control</h3>
+      <p className="text-sm text-slate-500 mb-6">Control all the text that appears on the student marksheet/report card.</p>
+      
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">School Name (Main Heading)</label>
+            <input type="text" value={settings.school_name} onChange={e => setSettings({...settings, school_name: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Report Card Heading</label>
+            <input type="text" value={settings.marksheet_heading} onChange={e => setSettings({...settings, marksheet_heading: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g. ANNUAL EXAMINATION RESULT" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Report Card Subheading</label>
+            <input type="text" value={settings.marksheet_subheading} onChange={e => setSettings({...settings, marksheet_subheading: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g. Session: 2025-2026" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Affiliation No.</label>
+            <input type="text" value={settings.marksheet_affiliation_no} onChange={e => setSettings({...settings, marksheet_affiliation_no: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">School Code</label>
+            <input type="text" value={settings.marksheet_school_code} onChange={e => setSettings({...settings, marksheet_school_code: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">School Address</label>
+            <input type="text" value={settings.marksheet_address} onChange={e => setSettings({...settings, marksheet_address: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+            <input type="text" value={settings.marksheet_phone} onChange={e => setSettings({...settings, marksheet_phone: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Website</label>
+            <input type="text" value={settings.marksheet_website} onChange={e => setSettings({...settings, marksheet_website: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+            <input type="text" value={settings.marksheet_email} onChange={e => setSettings({...settings, marksheet_email: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+          </div>
+        </div>
+
+        <button type="submit" className="bg-blue-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-900 transition-colors shadow-lg">
+          Update Marksheet Settings
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ManageStudentsTab({ students, onSuccess }: { students: any[], onSuccess: () => void }) {
+  const adminFetch = useAdminFetch();
+  const [selectedClass, setSelectedClass] = useState('1');
+  const [targetClass, setTargetClass] = useState('2');
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [isPromoting, setIsPromoting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const classCounts = CLASSES.reduce((acc, className) => {
+    acc[className] = students.filter(s => s.class_name === className).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const filteredStudents = students.filter(s => 
+    s.class_name === selectedClass && 
+    (s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.roll_no.includes(searchQuery))
+  );
+
+  const handleSelectAll = () => {
+    if (selectedStudents.length === filteredStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(filteredStudents.map(s => s.id));
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete student "${name}"? This will remove their record permanently.`)) {
+      try {
+        const res = await adminFetch(`/api/admin/students/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          onSuccess();
+        } else {
+          alert('Failed to delete student');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handlePromote = async () => {
+    if (selectedStudents.length === 0) {
+      alert('Please select at least one student to promote');
+      return;
+    }
+    if (selectedClass === targetClass) {
+      alert('Target class must be different from current class');
+      return;
+    }
+
+    if (window.confirm(`Promote ${selectedStudents.length} students from Class ${selectedClass} to Class ${targetClass}?`)) {
+      setIsPromoting(true);
+      try {
+        const res = await adminFetch('/api/admin/students/promote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentIds: selectedStudents,
+            targetClass
+          })
+        });
+        if (res.ok) {
+          setSelectedStudents([]);
+          onSuccess();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to promote students');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsPromoting(false);
+      }
+    }
+  };
+
+  const toggleStudentSelection = (id: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Class-wise Stats */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+          <Users className="mr-2 h-5 w-5 text-blue-600" />
+          Student Statistics (Class-wise)
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {CLASSES.map(c => (
+            <div key={c} className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Class {c}</div>
+              <div className="text-2xl font-bold text-blue-800">{classCounts[c] || 0}</div>
+            </div>
+          ))}
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+            <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Total</div>
+            <div className="text-2xl font-bold text-blue-900">{students.length}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Student Management */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h3 className="text-xl font-bold text-slate-800">Manage Students</h3>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-slate-600">Filter by Class:</label>
+              <select 
+                value={selectedClass} 
+                onChange={e => { setSelectedClass(e.target.value); setSelectedStudents([]); }}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              >
+                {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+              </select>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search name or roll..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full md:w-64"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Promotion Controls */}
+        {selectedStudents.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <div className="text-blue-800 font-medium">
+              {selectedStudents.length} students selected for promotion
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-slate-600">Promote to:</span>
+              <select 
+                value={targetClass} 
+                onChange={e => setTargetClass(e.target.value)}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+              >
+                {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+              </select>
+              <button 
+                onClick={handlePromote}
+                disabled={isPromoting}
+                className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors flex items-center disabled:opacity-50"
+              >
+                <ArrowUpCircle className="mr-2 h-4 w-4" />
+                {isPromoting ? 'Promoting...' : 'Promote Selected'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-100 text-slate-700">
+                <th className="p-3 border-b w-10">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedStudents.length === filteredStudents.length && filteredStudents.length > 0}
+                    onChange={() => {
+                      if (selectedStudents.length === filteredStudents.length) {
+                        setSelectedStudents([]);
+                      } else {
+                        setSelectedStudents(filteredStudents.map(s => s.id));
+                      }
+                    }}
+                    className="rounded text-blue-600"
+                  />
+                </th>
+                <th className="p-3 border-b">Roll</th>
+                <th className="p-3 border-b">Name</th>
+                <th className="p-3 border-b">Father's Name</th>
+                <th className="p-3 border-b text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-500 italic">No students found in Class {selectedClass}</td>
+                </tr>
+              ) : (
+                filteredStudents.map(s => (
+                  <tr key={s.id} className={`hover:bg-slate-50 transition-colors ${selectedStudents.includes(s.id) ? 'bg-blue-50/50' : ''}`}>
+                    <td className="p-3 border-b">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStudents.includes(s.id)}
+                        onChange={() => toggleStudentSelection(s.id)}
+                        className="rounded text-blue-600"
+                      />
+                    </td>
+                    <td className="p-3 border-b font-mono text-sm">{s.roll_no}</td>
+                    <td className="p-3 border-b font-medium text-slate-800">{s.name}</td>
+                    <td className="p-3 border-b text-slate-600">{s.father_name}</td>
+                    <td className="p-3 border-b text-right">
+                      <button 
+                        onClick={() => handleDelete(s.id, s.name)}
+                        className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Delete Student"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

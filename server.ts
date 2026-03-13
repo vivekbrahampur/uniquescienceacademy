@@ -1,4 +1,5 @@
 import express from 'express';
+console.log('>>> server.ts is starting...');
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,22 +8,29 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, getDoc, doc, setDoc, addDoc, deleteDoc, query, where, orderBy, writeBatch } from 'firebase/firestore';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
+import speakeasy from 'speakeasy';
+import qrcode from 'qrcode';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const JWT_SECRET = 'your-super-secret-jwt-key-change-in-production';
 
 // Read Firebase config
-const firebaseConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'firebase-applet-config.json'), 'utf-8'));
+const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf-8'));
+console.log('Firebase config loaded:', firebaseConfig.projectId);
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
 // Initialize default settings if not exist
 async function initSettings() {
+  throw new Error('Test error');
+  console.log('Initializing settings...');
   try {
     const settingsRef = doc(db, 'settings', 'global');
     const settingsSnap = await getDoc(settingsRef);
+    console.log('Settings snapshot exists:', settingsSnap.exists());
     
     if (!settingsSnap.exists()) {
+      console.log('Creating default settings...');
       await setDoc(settingsRef, {
         logo_url: 'https://picsum.photos/seed/schoollogo/200/200',
         gallery_images: [
@@ -36,6 +44,14 @@ async function initSettings() {
         admin_username: 'admin',
         admin_password: 'admin123',
         school_name: 'Unique Science Academy',
+        marksheet_heading: 'ANNUAL EXAMINATION RESULT',
+        marksheet_subheading: 'Session: 2025-2026',
+        marksheet_affiliation_no: '1548G',
+        marksheet_school_code: '1548',
+        marksheet_address: 'Brahampur, Jale, Darbhanga, Bihar 847307',
+        marksheet_phone: '(0542)-XXXXXXX',
+        marksheet_website: 'www.uniquescienceacademy.in',
+        marksheet_email: 'info@uniquescienceacademy.in',
         hero_title: 'Welcome to Unique Science Academy',
         hero_subtitle: 'Empowering minds, shaping the future.',
         news_ticker: 'Admissions open for 2026-2027 | Annual Sports Meet on 15th March',
@@ -262,7 +278,7 @@ async function sendDualNotification(eventType: string, userDetails: any, eventDe
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '50mb' }));
 
@@ -287,6 +303,7 @@ async function startServer() {
     try {
       const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
       const settings = settingsSnap.data() || {};
+      console.log('API settings data from Firestore:', settings);
       
       const publicKeys = [
         'logo_url', 'gallery_images', 'testimonials', 'contact_address', 
@@ -319,12 +336,28 @@ async function startServer() {
 
   // Admin: Login & Credentials
   app.post('/api/admin/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, token: twoFactorToken } = req.body;
     try {
       const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
       const settings = settingsSnap.data() || {};
       
       if (username === settings.admin_username && password === settings.admin_password) {
+        if (settings.two_factor_enabled) {
+          if (!twoFactorToken) {
+            return res.json({ success: true, requires2FA: true });
+          }
+          
+          const verified = speakeasy.totp.verify({
+            secret: settings.two_factor_secret,
+            encoding: 'base32',
+            token: twoFactorToken
+          });
+          
+          if (!verified) {
+            return res.status(401).json({ success: false, error: 'Invalid 2FA token' });
+          }
+        }
+        
         const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ success: true, token });
       } else {
@@ -332,6 +365,54 @@ async function startServer() {
       }
     } catch (error) {
       res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  app.post('/api/admin/2fa/setup', authenticateAdmin, async (req, res) => {
+    try {
+      const secret = speakeasy.generateSecret({ name: 'School Admin' });
+      const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url!);
+      
+      // Store secret temporarily or just send to client
+      // We'll send it to client and they will send it back to verify and enable
+      res.json({ secret: secret.base32, qrCode: qrCodeUrl });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to setup 2FA' });
+    }
+  });
+
+  app.post('/api/admin/2fa/verify', authenticateAdmin, async (req, res) => {
+    const { secret, token } = req.body;
+    try {
+      const verified = speakeasy.totp.verify({
+        secret: secret,
+        encoding: 'base32',
+        token: token
+      });
+      
+      if (verified) {
+        await setDoc(doc(db, 'settings', 'global'), {
+          two_factor_enabled: true,
+          two_factor_secret: secret
+        }, { merge: true });
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ error: 'Invalid token' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to verify 2FA' });
+    }
+  });
+
+  app.post('/api/admin/2fa/disable', authenticateAdmin, async (req, res) => {
+    try {
+      await setDoc(doc(db, 'settings', 'global'), {
+        two_factor_enabled: false,
+        two_factor_secret: null
+      }, { merge: true });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to disable 2FA' });
     }
   });
 
@@ -373,7 +454,7 @@ async function startServer() {
   });
 
   app.post('/api/admin/students', authenticateAdmin, async (req, res) => {
-    const { name, father_name, class_name, roll_no, photo_url } = req.body;
+    const { name, father_name, mother_name, class_name, roll_no, photo_url } = req.body;
     try {
       // Check if student exists
       const q = query(collection(db, 'students'), where('class_name', '==', class_name), where('roll_no', '==', roll_no));
@@ -383,7 +464,7 @@ async function startServer() {
       }
       
       const docRef = await addDoc(collection(db, 'students'), {
-        name, father_name, class_name, roll_no, photo_url,
+        name, father_name, mother_name, class_name, roll_no, photo_url,
         createdAt: new Date().toISOString()
       });
       res.json({ id: docRef.id, success: true });
@@ -393,7 +474,7 @@ async function startServer() {
   });
 
   app.post('/api/admin/students/full', authenticateAdmin, async (req, res) => {
-    const { name, father_name, class_name, roll_no, email, phone, dob, gender, address, photo_url } = req.body;
+    const { name, father_name, mother_name, class_name, roll_no, email, phone, dob, gender, address, photo_url } = req.body;
     try {
       // Check if student exists
       const q = query(collection(db, 'students'), where('class_name', '==', class_name), where('roll_no', '==', roll_no));
@@ -403,7 +484,7 @@ async function startServer() {
       }
       
       const docRef = await addDoc(collection(db, 'students'), {
-        name, father_name, class_name, roll_no, email, phone, dob, gender, address, photo_url,
+        name, father_name, mother_name, class_name, roll_no, email, phone, dob, gender, address, photo_url,
         createdAt: new Date().toISOString()
       });
       
@@ -414,6 +495,43 @@ async function startServer() {
     } catch (error) {
       console.error(error);
       res.status(400).json({ error: 'Failed to add student' });
+    }
+  });
+
+  app.delete('/api/admin/students/:id', authenticateAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    console.log(`Attempting to delete student: ${id}`);
+    try {
+      await deleteDoc(doc(db, 'students', id));
+      console.log(`Successfully deleted student: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error(`Failed to delete student: ${id}`, error);
+      res.status(500).json({ error: 'Failed to delete student' });
+    }
+  });
+
+  app.post('/api/admin/students/promote', authenticateAdmin, async (req, res) => {
+    const { studentIds, nextClass, targetClass } = req.body;
+    const finalClass = targetClass || nextClass;
+    console.log(`Attempting to promote students: ${studentIds} to ${finalClass}`);
+    
+    if (!finalClass) {
+      return res.status(400).json({ error: 'Target class is required' });
+    }
+
+    try {
+      const batch = writeBatch(db);
+      for (const id of studentIds) {
+        const studentRef = doc(db, 'students', id);
+        batch.update(studentRef, { class_name: finalClass });
+      }
+      await batch.commit();
+      console.log(`Successfully promoted students: ${studentIds} to ${finalClass}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error(`Failed to promote students`, error);
+      res.status(500).json({ error: 'Failed to promote students' });
     }
   });
 
@@ -449,14 +567,39 @@ async function startServer() {
     }
   });
 
-  // Admin: Test Links
-  app.get('/api/admin/test-links', authenticateAdmin, async (req, res) => {
+  // Admin: Notice Panel
+  app.post('/api/admin/notice', authenticateAdmin, async (req, res) => {
+    const { title, pdf_url } = req.body;
     try {
-      const linksSnap = await getDocs(collection(db, 'test_links'));
-      const links = linksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      res.json(links);
+      await addDoc(collection(db, 'notices'), {
+        title, pdf_url,
+        createdAt: new Date().toISOString()
+      });
+      res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch test links' });
+      res.status(400).json({ error: 'Failed to add notice' });
+    }
+  });
+
+  app.delete('/api/admin/notices/:id', authenticateAdmin, async (req, res) => {
+    const id = req.params.id;
+    try {
+      await deleteDoc(doc(db, 'notices', id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to delete notice' });
+    }
+  });
+
+  // Student: Notices
+  app.get('/api/student/notices', async (req, res) => {
+    try {
+      const q = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
+      const noticesSnap = await getDocs(q);
+      const notices = noticesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(notices);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch notices' });
     }
   });
 
@@ -484,10 +627,14 @@ async function startServer() {
   });
 
   app.delete('/api/admin/test-links/:id', authenticateAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    console.log(`Attempting to delete test link: ${id}`);
     try {
-      await deleteDoc(doc(db, 'test_links', req.params.id));
+      await deleteDoc(doc(db, 'test_links', id));
+      console.log(`Successfully deleted test link: ${id}`);
       res.json({ success: true });
     } catch (error) {
+      console.error(`Failed to delete test link: ${id}`, error);
       res.status(400).json({ error: 'Failed to delete test link' });
     }
   });
@@ -722,14 +869,15 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, 'dist')));
+    app.use(express.static(path.join(process.cwd(), 'dist')));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
     });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`>>> Server is listening on port ${PORT}`);
+    console.log(`>>> Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 }
 
