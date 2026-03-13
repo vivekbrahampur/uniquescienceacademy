@@ -1008,6 +1008,7 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
   const [principalName, setPrincipalName] = useState('');
   const [principalMessage, setPrincipalMessage] = useState('');
   const [principalImage, setPrincipalImage] = useState('');
+  const [resultSectionEnabled, setResultSectionEnabled] = useState(false);
 
   const [newTestimonial, setNewTestimonial] = useState({ name: '', role: '', text: '', image: '' });
 
@@ -1031,6 +1032,7 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
         setPrincipalName(data.principal_name || '');
         setPrincipalMessage(data.principal_message || '');
         setPrincipalImage(data.principal_image || '');
+        setResultSectionEnabled(data.result_section_enabled || false);
       });
   }, []);
 
@@ -1096,7 +1098,8 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
           about_image: aboutImage,
           principal_name: principalName,
           principal_message: principalMessage,
-          principal_image: principalImage
+          principal_image: principalImage,
+          result_section_enabled: resultSectionEnabled
         })
       });
       if (res.ok) {
@@ -1120,6 +1123,17 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">School Name</label>
             <input type="text" value={schoolName} onChange={e => setSchoolName(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="flex items-center space-x-3">
+              <input 
+                type="checkbox" 
+                checked={resultSectionEnabled} 
+                onChange={e => setResultSectionEnabled(e.target.checked)} 
+                className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="text-sm font-medium text-slate-700">Enable Result Section on Home Page</span>
+            </label>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">School Logo (Upload Image)</label>
