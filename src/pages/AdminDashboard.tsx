@@ -49,12 +49,15 @@ export function useAdminFetch() {
   const navigate = useNavigate();
   return React.useCallback(async (url: string, options: RequestInit = {}) => {
     const token = localStorage.getItem('adminToken');
+    console.log('adminFetch token:', token);
     const headers = {
       ...options.headers,
       'Authorization': `Bearer ${token}`
     };
     const res = await fetch(url, { ...options, headers });
+    console.log('adminFetch response status:', res.status);
     if (res.status === 401 || res.status === 403) {
+      console.log('adminFetch unauthorized, clearing storage');
       localStorage.removeItem('adminAuth');
       localStorage.removeItem('adminToken');
       navigate('/admin/login');
@@ -75,10 +78,11 @@ export default function AdminDashboard() {
   const { settings: themeSettings, updateSettings } = useTheme();
 
   useEffect(() => {
-    if (!localStorage.getItem('adminAuth')) {
+    if (!localStorage.getItem('adminAuth') || !localStorage.getItem('adminToken')) {
       navigate('/admin/login');
+    } else {
+      fetchStudents();
     }
-    fetchStudents();
   }, [navigate]);
 
   const fetchStudents = async () => {
@@ -346,9 +350,14 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
         setFormData({ name: '', username: '', password: '', permissions: [] });
         fetchTeachers();
         onSuccess();
+        if (showSuccess) showSuccess('Teacher added successfully');
+      } else {
+        const data = await res.json();
+        if (showError) showError(data.error || 'Failed to add teacher');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while adding the teacher');
     }
   };
 
@@ -360,9 +369,12 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
         if (showSuccess) showSuccess('Teacher deleted successfully');
         fetchTeachers();
         onSuccess();
+      } else {
+        if (showError) showError('Failed to delete teacher');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while deleting the teacher');
     }
   };
 
@@ -467,9 +479,13 @@ function ThemeSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: ()
       if (res.ok) {
         updateSettings(formData);
         onSuccess();
+        if (showSuccess) showSuccess('Theme settings updated successfully');
+      } else {
+        if (showError) showError('Failed to update theme settings');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while updating theme settings');
     }
   };
 
@@ -564,32 +580,35 @@ export function QRScannerTab({ onSuccess, showSuccess, showError }: { onSuccess:
 
   const startScanning = () => {
     setScanning(true);
-    const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 }, false);
-    scannerRef.current = scanner;
-    scanner.render(
-      async (decodedText) => {
-        setScanning(false);
-        scanner.clear().catch(console.error);
-        try {
-          const studentData = JSON.parse(decodedText);
-          const res = await adminFetch('/api/admin/students', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(studentData)
-          });
-          if (res.ok) {
-            onSuccess();
-          } else {
-            if (showError) showError('Failed to register student from QR code.');
+    // Use setTimeout to ensure the element is rendered in the DOM before initializing the scanner
+    setTimeout(() => {
+      const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 }, false);
+      scannerRef.current = scanner;
+      scanner.render(
+        async (decodedText) => {
+          setScanning(false);
+          scanner.clear().catch(console.error);
+          try {
+            const studentData = JSON.parse(decodedText);
+            const res = await adminFetch('/api/admin/students', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(studentData)
+            });
+            if (res.ok) {
+              onSuccess();
+            } else {
+              if (showError) showError('Failed to register student from QR code.');
+            }
+          } catch (err) {
+            if (showError) showError('Invalid QR code data.');
           }
-        } catch (err) {
-          if (showError) showError('Invalid QR code data.');
+        },
+        (errorMessage) => {
+          console.log(errorMessage);
         }
-      },
-      (errorMessage) => {
-        console.log(errorMessage);
-      }
-    );
+      );
+    }, 0);
   };
 
   return (
@@ -630,12 +649,25 @@ export function ExamScheduleTab({ onSuccess, showSuccess, showError }: { onSucce
       onSuccess();
       adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
       setFormData({ class_name: '1', subject: '', date: '', time: '' });
+      if (showSuccess) showSuccess('Exam added to schedule successfully');
+    } else {
+      if (showError) showError('Failed to add exam to schedule');
     }
   };
 
   const deleteExam = async (id: string) => {
-    await adminFetch(`/api/admin/exams/${id}`, { method: 'DELETE' });
-    adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+    try {
+      const res = await adminFetch(`/api/admin/exams/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+        if (showSuccess) showSuccess('Exam removed from schedule');
+      } else {
+        if (showError) showError('Failed to remove exam');
+      }
+    } catch (err) {
+      console.error(err);
+      if (showError) showError('An error occurred while removing the exam');
+    }
   };
 
   return (
@@ -895,9 +927,13 @@ export function ResultsTab({ students, onSuccess, showSuccess, showError }: { st
         onSuccess();
         setStudentId('');
         setMarksData(SUBJECTS.reduce((acc, sub) => ({ ...acc, [sub]: { marks: '', total: '100' } }), {}));
+        if (showSuccess) showSuccess('Result uploaded successfully');
+      } else {
+        if (showError) showError('Failed to upload result');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while uploading the result');
     }
   };
 
@@ -1063,9 +1099,15 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
           principal_image: principalImage
         })
       });
-      if (res.ok) onSuccess();
+      if (res.ok) {
+        onSuccess();
+        if (showSuccess) showSuccess('Website content updated successfully');
+      } else {
+        if (showError) showError('Failed to update website content');
+      }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while updating website content');
     }
   };
 
@@ -1309,9 +1351,13 @@ function SecurityTab({ onSuccess, showSuccess, showError }: { onSuccess: () => v
         onSuccess();
         setUsername('');
         setPassword('');
+        if (showSuccess) showSuccess('Credentials updated successfully');
+      } else {
+        if (showError) showError('Failed to update credentials');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while updating credentials');
     }
   };
 
@@ -1337,11 +1383,13 @@ function SecurityTab({ onSuccess, showSuccess, showError }: { onSuccess: () => v
         setSetupData(null);
         setToken('');
         onSuccess();
+        if (showSuccess) showSuccess('2FA enabled successfully');
       } else {
         if (showError) showError('Invalid token');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred during 2FA verification');
     }
   };
 
@@ -1483,14 +1531,18 @@ export function TestsTab({ onSuccess, showSuccess, showError }: { onSuccess: () 
         onSuccess();
         setFormData({ ...formData, subject: '', title: '', link: '' });
         fetchTestLinks();
+        if (showSuccess) showSuccess('Test link added successfully');
+      } else {
+        if (showError) showError('Failed to add test link');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while adding the test link');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm && !window.confirm('Are you sure you want to delete this test link?')) return;
+    // Removed confirm() for iframe compatibility
     try {
       const res = await adminFetch(`/api/admin/test-links/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -1703,9 +1755,15 @@ function EmailSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: ()
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
-      if (res.ok) onSuccess();
+      if (res.ok) {
+        onSuccess();
+        if (showSuccess) showSuccess('Email settings updated successfully');
+      } else {
+        if (showError) showError('Failed to update email settings');
+      }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while updating email settings');
     }
   };
 
@@ -1758,20 +1816,46 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
     email: '', phone: '', dob: '', gender: 'Male', address: '', photo_url: ''
   });
   const [loading, setLoading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setShowCamera(true);
+      }
+    } catch (err) {
+      if (showError) showError('Could not access camera.');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.7);
+        setFormData({ ...formData, photo_url: dataUrl });
+        setShowCamera(false);
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    }
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 500 * 1024) {
-        if (showError) showError('Photo size is too large. Please upload an image smaller than 500KB.');
-        e.target.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, photo_url: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+      compressImage(file).then(dataUrl => {
+        setFormData({ ...formData, photo_url: dataUrl });
+      }).catch(err => {
+        if (showError) showError('Failed to process image.');
+      });
     }
   };
 
@@ -1814,8 +1898,18 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Student Photo</label>
-            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-            {formData.photo_url && (
+            <div className="flex flex-col gap-2">
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+              <button type="button" onClick={startCamera} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors">Take Photo</button>
+            </div>
+            {showCamera && (
+              <div className="mt-4">
+                <video ref={videoRef} autoPlay playsInline className="w-full h-auto rounded-lg border border-slate-300" />
+                <button type="button" onClick={capturePhoto} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Capture</button>
+                <canvas ref={canvasRef} className="hidden" />
+              </div>
+            )}
+            {formData.photo_url && !showCamera && (
               <div className="mt-2">
                 <img src={formData.photo_url} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-300" />
               </div>
@@ -1914,9 +2008,15 @@ export function AttendanceTab({ students, onSuccess, showSuccess, showError }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ records: attendance, date, class_name: className })
       });
-      if (res.ok) onSuccess();
+      if (res.ok) {
+        onSuccess();
+        if (showSuccess) showSuccess('Attendance saved successfully');
+      } else {
+        if (showError) showError('Failed to save attendance');
+      }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while saving attendance');
     }
   };
 
@@ -2013,9 +2113,13 @@ export function FeesTab({ students, onSuccess, showSuccess, showError }: { stude
         // Refresh history
         const updatedRes = await adminFetch(`/api/admin/fees/${studentId}`);
         setHistory(await updatedRes.json());
+        if (showSuccess) showSuccess('Fee payment recorded successfully');
+      } else {
+        if (showError) showError('Failed to record fee payment');
       }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while recording fee payment');
     }
   };
 
@@ -2232,9 +2336,15 @@ function MarksheetSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
-      if (res.ok) onSuccess();
+      if (res.ok) {
+        onSuccess();
+        if (showSuccess) showSuccess('Marksheet settings updated successfully');
+      } else {
+        if (showError) showError('Failed to update marksheet settings');
+      }
     } catch (err) {
       console.error(err);
+      if (showError) showError('An error occurred while updating marksheet settings');
     }
   };
 

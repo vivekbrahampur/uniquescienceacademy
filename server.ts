@@ -395,6 +395,25 @@ async function startServer() {
     }
   });
 
+  app.post('/api/admin/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    try {
+      const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+      const settings = settingsSnap.data() || {};
+      
+      if (email === settings.contact_email) {
+        // Simulate sending email
+        console.log('Reset link sent to:', email);
+        res.json({ success: true });
+      } else {
+        // For security, don't reveal if email exists or not
+        res.json({ success: true });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to process request' });
+    }
+  });
+
   app.post('/api/admin/2fa/setup', authenticateAdmin, async (req, res) => {
     try {
       const secret = speakeasy.generateSecret({ name: 'School Admin' });
@@ -466,6 +485,15 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
+  app.get('/api/admin/settings', authenticateAdmin, async (req, res) => {
+    try {
+      const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+      res.json(settingsSnap.data() || {});
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch settings' });
     }
   });
 
@@ -707,6 +735,17 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(400).json({ error: 'Failed to add test link' });
+    }
+  });
+
+  app.get('/api/admin/test-links', authenticateUser, checkPermission('tests'), async (req, res) => {
+    try {
+      const q = query(collection(db, 'test_links'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      const links = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(links);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch test links' });
     }
   });
 
@@ -958,6 +997,39 @@ async function startServer() {
       res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
     });
   }
+
+  // Admin: Exams
+  app.get('/api/admin/exams', authenticateUser, checkPermission('exam_schedule'), async (req, res) => {
+    try {
+      const examsSnap = await getDocs(collection(db, 'exams'));
+      const exams = examsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(exams);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch exams' });
+    }
+  });
+
+  app.post('/api/admin/exams', authenticateUser, checkPermission('exam_schedule'), async (req, res) => {
+    const examData = req.body;
+    try {
+      const docRef = await addDoc(collection(db, 'exams'), {
+        ...examData,
+        createdAt: new Date().toISOString()
+      });
+      res.json({ id: docRef.id, ...examData });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to add exam' });
+    }
+  });
+
+  app.delete('/api/admin/exams/:id', authenticateUser, checkPermission('exam_schedule'), async (req, res) => {
+    try {
+      await deleteDoc(doc(db, 'exams', req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to delete exam' });
+    }
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`>>> Server is listening on port ${PORT}`);

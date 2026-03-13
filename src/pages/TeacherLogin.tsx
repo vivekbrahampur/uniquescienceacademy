@@ -21,6 +21,7 @@ export default function TeacherLogin() {
         body: JSON.stringify(formData)
       });
       const data = await res.json();
+      console.log('Login response:', data);
       if (data.success) {
         localStorage.setItem('teacherAuth', JSON.stringify(data.teacher));
         localStorage.setItem('teacherToken', data.token);

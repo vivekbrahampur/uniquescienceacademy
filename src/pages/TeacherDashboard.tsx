@@ -14,12 +14,15 @@ export function useTeacherFetch() {
   const navigate = useNavigate();
   return React.useCallback(async (url: string, options: RequestInit = {}) => {
     const token = localStorage.getItem('teacherToken');
+    console.log('teacherFetch token:', token);
     const headers = {
       ...options.headers,
       'Authorization': `Bearer ${token}`
     };
     const res = await fetch(url, { ...options, headers });
+    console.log('teacherFetch response status:', res.status);
     if (res.status === 401 || res.status === 403) {
+      console.log('teacherFetch unauthorized, clearing storage');
       localStorage.removeItem('teacherAuth');
       localStorage.removeItem('teacherToken');
       navigate('/teacher/login');
@@ -40,16 +43,19 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     const auth = localStorage.getItem('teacherAuth');
+    console.log('Teacher auth from localStorage:', auth);
     if (!auth) {
       navigate('/teacher/login');
       return;
     }
     const info = JSON.parse(auth);
+    console.log('Teacher info parsed:', info);
     setTeacherInfo(info);
     
     // Set initial active tab based on first permission
     if (info.permissions && info.permissions.length > 0) {
       const firstTab = getTabFromPermission(info.permissions[0]);
+      console.log('Setting active tab to:', firstTab);
       setActiveTab(firstTab);
     }
 
@@ -63,6 +69,7 @@ export default function TeacherDashboard() {
       setStudents(data);
     } catch (err) {
       console.error(err);
+      showError('Failed to fetch students. Please check your connection.');
     }
   };
 

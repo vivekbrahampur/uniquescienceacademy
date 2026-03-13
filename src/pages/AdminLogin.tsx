@@ -154,7 +154,17 @@ export default function AdminLogin() {
               </button>
             )}
           </div>
-          {!requires2FA && <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-4">Default Credentials: admin / admin123</p>}
+          {!requires2FA && (
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => navigate('/admin/forgot-password')}
+                className="text-xs text-slate-500 hover:text-primary transition-colors"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </motion.div>

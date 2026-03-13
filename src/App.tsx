@@ -7,6 +7,7 @@ import StudentLogin from './pages/StudentLogin';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherLogin from './pages/TeacherLogin';
 import TeacherDashboard from './pages/TeacherDashboard';
+import ForgotPassword from './pages/ForgotPassword';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -20,6 +21,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/forgot-password" element={<ForgotPassword />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/dashboard" element={<StudentDashboard />} />

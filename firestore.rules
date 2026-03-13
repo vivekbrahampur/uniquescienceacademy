@@ -47,5 +47,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+
+    match /teachers/{document=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /exams/{document=**} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }
