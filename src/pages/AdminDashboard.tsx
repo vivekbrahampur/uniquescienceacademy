@@ -340,6 +340,7 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
   const [formData, setFormData] = useState({
     name: '',
     username: '',
+    email: '',
     password: '',
     permissions: [] as string[]
   });
@@ -386,7 +387,7 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
         body: JSON.stringify(formData)
       });
       if (res.ok) {
-        setFormData({ name: '', username: '', password: '', permissions: [] });
+        setFormData({ name: '', username: '', email: '', password: '', permissions: [] });
         fetchTeachers();
         onSuccess();
         if (showSuccess) showSuccess('Teacher added successfully');
@@ -417,6 +418,21 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
     }
   };
 
+  const handleResetPassword = async (id: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/teachers/${id}/reset-password`, { method: 'POST' });
+      if (res.ok) {
+        if (showSuccess) showSuccess('Password reset link sent to teacher email');
+      } else {
+        const data = await res.json();
+        if (showError) showError(data.error || 'Failed to send reset link');
+      }
+    } catch (err) {
+      console.error(err);
+      if (showError) showError('An error occurred while sending reset link');
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
@@ -425,6 +441,7 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input required type="text" placeholder="Teacher Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
             <input required type="text" placeholder="Username" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
+            <input required type="email" placeholder="Email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
             <input required type="password" placeholder="Password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:text-white" />
           </div>
           
@@ -478,9 +495,14 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
                     </div>
                   </td>
                   <td className="p-4">
-                    <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:text-red-700">
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button onClick={() => handleResetPassword(t.id)} className="text-blue-500 hover:text-blue-700">
+                        <RefreshCw className="h-5 w-5" />
+                      </button>
+                      <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:text-red-700">
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

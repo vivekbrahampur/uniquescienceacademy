@@ -10,6 +10,7 @@ import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
+import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const JWT_SECRET = 'your-super-secret-jwt-key-change-in-production';
@@ -468,9 +469,11 @@ async function startServer() {
 
   app.post('/api/admin/forgot-password', async (req, res) => {
     const { email } = req.body;
+    console.log('Forgot password request for:', email);
     try {
       const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
       const settings = settingsSnap.data() || {};
+      console.log('Settings contact_email:', settings.contact_email);
       
       if (email === settings.contact_email) {
         // Simulate sending email
@@ -478,9 +481,11 @@ async function startServer() {
         res.json({ success: true });
       } else {
         // For security, don't reveal if email exists or not
+        console.log('Email not found, but returning success for security');
         res.json({ success: true });
       }
     } catch (error) {
+      console.error('Forgot password error:', error);
       res.status(500).json({ error: 'Failed to process request' });
     }
   });
@@ -647,6 +652,74 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(400).json({ error: 'Failed to delete teacher' });
+    }
+  });
+
+  app.post('/api/admin/teachers/:id/reset-password', authenticateAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const teacherSnap = await getDoc(doc(db, 'teachers', id));
+      if (!teacherSnap.exists()) return res.status(404).json({ error: 'Teacher not found' });
+      const teacher = teacherSnap.data();
+      if (!teacher.email) return res.status(400).json({ error: 'Teacher does not have a registered email' });
+
+      const token = crypto.randomBytes(20).toString('hex');
+      const expires = new Date(Date.now() + 3600000); // 1 hour
+
+      await setDoc(doc(db, 'teachers', id), {
+        resetToken: token,
+        resetTokenExpires: expires.toISOString()
+      }, { merge: true });
+
+      const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+      const settings = settingsSnap.data() || {};
+      
+      const transporter = nodemailer.createTransport({
+        host: settings.smtp_host || 'smtp.gmail.com',
+        port: parseInt(settings.smtp_port) || 587,
+        secure: parseInt(settings.smtp_port) === 465,
+        auth: {
+          user: settings.smtp_user,
+          pass: settings.smtp_pass,
+        },
+      });
+
+      const resetLink = `${process.env.APP_URL}/teacher/reset-password/${token}`;
+      await transporter.sendMail({
+        from: `"${settings.school_name || 'School Admin'}" <${settings.smtp_user}>`,
+        to: teacher.email,
+        subject: 'Password Reset Request',
+        text: `You requested a password reset. Click here to reset: ${resetLink}`,
+        html: `<p>You requested a password reset. Click <a href="${resetLink}">here</a> to reset your password.</p>`
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: 'Failed to initiate password reset' });
+    }
+  });
+
+  app.post('/api/teacher/reset-password', async (req, res) => {
+    const { token, password } = req.body;
+    try {
+      const teachersSnap = await getDocs(query(collection(db, 'teachers'), where('resetToken', '==', token)));
+      if (teachersSnap.empty) return res.status(400).json({ error: 'Invalid or expired token' });
+      const teacherDoc = teachersSnap.docs[0];
+      const teacher = teacherDoc.data();
+      
+      if (new Date(teacher.resetTokenExpires) < new Date()) return res.status(400).json({ error: 'Token expired' });
+
+      await setDoc(doc(db, 'teachers', teacherDoc.id), {
+        password: password,
+        resetToken: null,
+        resetTokenExpires: null
+      }, { merge: true });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: 'Failed to reset password' });
     }
   });
 
