@@ -526,10 +526,13 @@ async function startServer() {
 
   app.delete('/api/admin/results/public/:id', authenticateUser, async (req, res) => {
     const { id } = req.params;
+    console.log(`Attempting to delete result with ID: ${id}`);
     try {
       await deleteDoc(doc(db, 'public_results', id));
+      console.log(`Successfully deleted result with ID: ${id}`);
       res.json({ success: true });
     } catch (error) {
+      console.error(`Failed to delete result with ID: ${id}:`, error);
       res.status(500).json({ error: 'Failed to delete result' });
     }
   });

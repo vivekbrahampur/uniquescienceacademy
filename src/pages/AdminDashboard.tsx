@@ -51,7 +51,7 @@ export function useAdminFetch() {
     const token = localStorage.getItem('adminToken');
     console.log('adminFetch token:', token);
     const headers = {
-      ...options.headers,
+      ...(options.headers || {}),
       'Authorization': `Bearer ${token}`
     };
     const res = await fetch(url, { ...options, headers });
