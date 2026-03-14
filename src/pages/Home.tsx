@@ -37,7 +37,7 @@ export default function Home() {
   const fetchResults = () => {
     fetch('/api/results')
       .then(res => res.json())
-      .then(data => setResults(data))
+      .then(data => setResults(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));
   };
 

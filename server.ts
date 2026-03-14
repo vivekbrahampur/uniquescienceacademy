@@ -336,7 +336,11 @@ async function startServer() {
         'logo_url', 'gallery_images', 'testimonials', 'contact_address', 
         'contact_email', 'contact_phone', 'school_name', 'hero_title', 
         'hero_subtitle', 'news_ticker', 'about_title', 'about_text', 
-        'about_image', 'principal_name', 'principal_message', 'principal_image'
+        'about_image', 'principal_name', 'principal_message', 'principal_image',
+        'result_section_enabled', 'marksheet_heading', 'marksheet_subheading',
+        'marksheet_affiliation_no', 'marksheet_school_code', 'marksheet_address',
+        'marksheet_phone', 'marksheet_website', 'marksheet_email',
+        'primary_color', 'secondary_color', 'accent_color', 'results_published'
       ];
       
       const settingsMap = Object.keys(settings).reduce((acc: any, key) => {
@@ -725,6 +729,44 @@ async function startServer() {
     }
   });
 
+  app.get('/api/admin/results/:class_name', authenticateUser, checkPermission('results'), async (req, res) => {
+    try {
+      const class_name = req.params.class_name;
+      // Get all students in this class
+      const studentsQ = query(collection(db, 'students'), where('class_name', '==', class_name));
+      const studentsSnap = await getDocs(studentsQ);
+      const students = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (students.length === 0) {
+        return res.json([]);
+      }
+
+      const studentIds = students.map(s => s.id);
+      
+      // Firestore 'in' query supports up to 10 values, so we might need to chunk it,
+      // but a simpler way is to fetch all results and filter, or chunk the queries.
+      // Since we are in admin panel, let's fetch all results and filter by studentIds.
+      const resultsSnap = await getDocs(collection(db, 'results'));
+      const allResults = resultsSnap.docs.map(doc => doc.data());
+      
+      const classResults = allResults.filter(r => studentIds.includes(r.studentId));
+      
+      // Group by studentId
+      const grouped: Record<string, any> = {};
+      students.forEach(s => {
+        grouped[s.id] = {
+          student: s,
+          results: classResults.filter(r => r.studentId === s.id)
+        };
+      });
+      
+      res.json(Object.values(grouped));
+    } catch (error) {
+      console.error('Failed to fetch class results:', error);
+      res.status(500).json({ error: 'Failed to fetch class results' });
+    }
+  });
+
   // Admin: Notice Panel
   app.post('/api/admin/notice', authenticateUser, checkPermission('notices'), async (req, res) => {
     const { title, pdf_url } = req.body;
@@ -1030,19 +1072,7 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    app.use(express.static(path.join(process.cwd(), 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
-    });
-  }
+
 
   // Admin: Exams
   app.get('/api/admin/exams', authenticateUser, checkPermission('exam_schedule'), async (req, res) => {
@@ -1076,6 +1106,20 @@ async function startServer() {
       res.status(400).json({ error: 'Failed to delete exam' });
     }
   });
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    app.use(express.static(path.join(process.cwd(), 'dist')));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+    });
+  }
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`>>> Server is listening on port ${PORT}`);

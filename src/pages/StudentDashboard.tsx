@@ -146,7 +146,7 @@ function NoticesTab() {
     fetch('/api/student/notices')
       .then(res => res.json())
       .then(data => {
-        setNotices(data);
+        setNotices(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
@@ -479,8 +479,8 @@ function TestTab({ student }: { student: any }) {
       fetch(`/api/student/${student.id}/online-test-marks`).then(res => res.json())
     ])
     .then(([linksData, marksData]) => {
-      setTestLinks(linksData);
-      setTestMarks(marksData);
+      setTestLinks(Array.isArray(linksData) ? linksData : []);
+      setTestMarks(Array.isArray(marksData) ? marksData : []);
       setLoading(false);
     })
     .catch(err => {
@@ -589,7 +589,7 @@ function AttendanceTab({ student }: { student: any }) {
     fetch(`/api/student/${student.id}/attendance`)
       .then(res => res.json())
       .then(data => {
-        setAttendance(data);
+        setAttendance(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
@@ -673,7 +673,7 @@ function FeesTab({ student }: { student: any }) {
     fetch(`/api/student/${student.id}/fees`)
       .then(res => res.json())
       .then(data => {
-        setFees(data);
+        setFees(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {

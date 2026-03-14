@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, UserCog, AlertCircle, Camera, RefreshCw, Menu } from 'lucide-react';
+import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, UserCog, AlertCircle, Camera, RefreshCw, Menu, Download } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import ImageCropper from '../components/ImageCropper';
 
@@ -353,7 +353,7 @@ export function ManageTeachersTab({ onSuccess, showSuccess, showError }: { onSuc
     try {
       const res = await adminFetch('/api/admin/teachers');
       const data = await res.json();
-      setTeachers(data);
+      setTeachers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     }
@@ -602,7 +602,7 @@ export function ExamScheduleTab({ onSuccess, showSuccess, showError }: { onSucce
   const [formData, setFormData] = useState({ class_name: '1', subject: '', date: '', time: '' });
 
   useEffect(() => {
-    adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+    adminFetch('/api/admin/exams').then(res => res.json()).then(data => setExams(Array.isArray(data) ? data : []));
   }, [adminFetch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -614,7 +614,7 @@ export function ExamScheduleTab({ onSuccess, showSuccess, showError }: { onSucce
     });
     if (res.ok) {
       onSuccess();
-      adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+      adminFetch('/api/admin/exams').then(res => res.json()).then(data => setExams(Array.isArray(data) ? data : []));
       setFormData({ class_name: '1', subject: '', date: '', time: '' });
       if (showSuccess) showSuccess('Exam added to schedule successfully');
     } else {
@@ -626,7 +626,7 @@ export function ExamScheduleTab({ onSuccess, showSuccess, showError }: { onSucce
     try {
       const res = await adminFetch(`/api/admin/exams/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        adminFetch('/api/admin/exams').then(res => res.json()).then(setExams);
+        adminFetch('/api/admin/exams').then(res => res.json()).then(data => setExams(Array.isArray(data) ? data : []));
         if (showSuccess) showSuccess('Exam removed from schedule');
       } else {
         if (showError) showError('Failed to remove exam');
@@ -670,7 +670,7 @@ export function NoticePanelTab({ onSuccess, showSuccess, showError }: { onSucces
     const res = await adminFetch('/api/student/notices');
     if (res.ok) {
       const data = await res.json();
-      setNotices(data);
+      setNotices(Array.isArray(data) ? data : []);
     }
   };
 
@@ -844,6 +844,8 @@ export function ResultsTab({ students, onSuccess, showSuccess, showError }: { st
   const adminFetch = useAdminFetch();
   const [studentId, setStudentId] = useState('');
   const [isPublished, setIsPublished] = useState(false);
+  const [downloadClass, setDownloadClass] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
   const [marksData, setMarksData] = useState<Record<string, {marks: string, total: string}>>(
     SUBJECTS.reduce((acc, sub) => ({ ...acc, [sub]: { marks: '', total: '100' } }), {})
   );
@@ -904,6 +906,78 @@ export function ResultsTab({ students, onSuccess, showSuccess, showError }: { st
     }
   };
 
+  const handleDownloadResults = async () => {
+    if (!downloadClass) return;
+    setIsDownloading(true);
+    try {
+      const res = await adminFetch(`/api/admin/results/${downloadClass}`);
+      if (!res.ok) throw new Error('Failed to fetch results');
+      const data = await res.json();
+      
+      if (!data || data.length === 0) {
+        if (showError) showError('No students or results found for this class.');
+        setIsDownloading(false);
+        return;
+      }
+
+      const csvRows = [];
+      const header = ['Roll No', 'Student Name', 'Class'];
+      SUBJECTS.forEach(sub => {
+        header.push(`${sub} (Obtained)`);
+        header.push(`${sub} (Total)`);
+      });
+      header.push('Total Obtained', 'Total Max', 'Percentage');
+      csvRows.push(header.join(','));
+
+      data.forEach((item: any) => {
+        const student = item.student;
+        const results = item.results;
+        
+        let totalObtained = 0;
+        let totalMax = 0;
+        const row = [student.roll_no, `"${student.name}"`, student.class_name];
+        
+        SUBJECTS.forEach(sub => {
+          const subResult = results.find((r: any) => r.subject === sub);
+          if (subResult) {
+            row.push(subResult.marks);
+            row.push(subResult.total_marks);
+            totalObtained += Number(subResult.marks) || 0;
+            totalMax += Number(subResult.total_marks) || 0;
+          } else {
+            row.push('N/A');
+            row.push('N/A');
+          }
+        });
+        
+        row.push(totalObtained.toString());
+        row.push(totalMax.toString());
+        const percentage = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(2) + '%' : 'N/A';
+        row.push(percentage);
+        
+        csvRows.push(row.join(','));
+      });
+
+      const csvString = csvRows.join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Results_${downloadClass}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      if (showSuccess) showSuccess('Results downloaded successfully');
+    } catch (err) {
+      console.error(err);
+      if (showError) showError('Failed to download results');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
@@ -920,6 +994,27 @@ export function ResultsTab({ students, onSuccess, showSuccess, showError }: { st
         >
           {isPublished ? 'Unpublish Results' : 'Publish All Results'}
         </button>
+      </div>
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Download Class Results</h3>
+        <div className="flex items-end space-x-4">
+          <div className="flex-1 max-w-sm">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Select Class</label>
+            <select value={downloadClass} onChange={e => setDownloadClass(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+              <option value="">-- Select Class --</option>
+              {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <button 
+            onClick={handleDownloadResults}
+            disabled={!downloadClass || isDownloading}
+            className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-sm flex items-center disabled:opacity-50"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            {isDownloading ? 'Downloading...' : 'Download CSV'}
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
@@ -968,7 +1063,7 @@ function ManageToppersTab({ onSuccess, showSuccess, showError }: { onSuccess: ()
       const res = await adminFetch('/api/results');
       if (res.ok) {
         const data = await res.json();
-        setResults(data);
+        setResults(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error('Error fetching toppers:', err);
@@ -1663,7 +1758,7 @@ export function TestsTab({ onSuccess, showSuccess, showError }: { onSuccess: () 
     try {
       const res = await adminFetch('/api/admin/test-links');
       const data = await res.json();
-      setTestLinks(data);
+      setTestLinks(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     }
@@ -2210,6 +2305,31 @@ export function AttendanceTab({ students, onSuccess, showSuccess, showError }: {
     }
   };
 
+  const handleDownloadAttendance = () => {
+    if (!className || !date) return;
+    const filteredStudents = students.filter(s => s.class_name === className);
+    if (filteredStudents.length === 0) return;
+
+    const csvRows = [];
+    csvRows.push(['Roll No', 'Student Name', 'Class', 'Date', 'Status'].join(','));
+
+    filteredStudents.forEach(s => {
+      const status = attendance[s.id] || 'Not Marked';
+      csvRows.push([s.roll_no, `"${s.name}"`, s.class_name, date, status].join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `Attendance_${className}_${date}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const filteredStudents = students.filter(s => s.class_name === className);
 
   return (
@@ -2258,9 +2378,15 @@ export function AttendanceTab({ students, onSuccess, showSuccess, showError }: {
             ))
           )}
           {filteredStudents.length > 0 && (
-            <button onClick={handleSave} className="mt-6 bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">
-              Save Attendance
-            </button>
+            <div className="mt-8 flex space-x-4">
+              <button onClick={handleSave} className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">
+                Save Attendance
+              </button>
+              <button onClick={handleDownloadAttendance} className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-sm flex items-center">
+                <Download className="w-5 h-5 mr-2" />
+                Download CSV
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -2281,7 +2407,7 @@ export function FeesTab({ students, onSuccess, showSuccess, showError }: { stude
     if (studentId) {
       adminFetch(`/api/admin/fees/${studentId}`)
         .then(res => res.json())
-        .then(data => setHistory(data))
+        .then(data => setHistory(Array.isArray(data) ? data : []))
         .catch(console.error);
     } else {
       setHistory([]);
