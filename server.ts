@@ -288,6 +288,7 @@ async function startServer() {
       const token = authHeader.split(' ')[1];
       jwt.verify(token, JWT_SECRET, (err, decoded: any) => {
         if (err || decoded.role !== 'admin') {
+          console.log('Auth error or not admin:', err, decoded);
           return res.status(403).json({ error: 'Forbidden' });
         }
         (req as any).user = decoded;
@@ -590,7 +591,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/admin/results/public/:id', authenticateUser, async (req, res) => {
+  app.delete('/api/admin/results/public/:id', authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     console.log(`Attempting to delete result with ID: ${id}`);
     try {
