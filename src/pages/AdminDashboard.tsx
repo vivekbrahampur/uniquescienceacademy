@@ -1070,9 +1070,13 @@ function ManageToppersTab({ onSuccess, showSuccess, showError }: { onSuccess: ()
   const fetchResults = async () => {
     try {
       const res = await adminFetch('/api/results');
+      console.log('fetchResults response:', res);
       if (res.ok) {
         const data = await res.json();
+        console.log('fetchResults data:', data);
         setResults(Array.isArray(data) ? data : []);
+      } else {
+        console.error('fetchResults failed:', res.status, await res.text());
       }
     } catch (err) {
       console.error('Error fetching toppers:', err);
@@ -2194,7 +2198,7 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
             ) : (
               <div className="bg-slate-900 p-4 rounded-2xl overflow-hidden shadow-xl">
                 <div className="relative aspect-video bg-black rounded-xl overflow-hidden mb-4">
-                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                 </div>
                 <div className="flex items-center justify-center space-x-4">
                   <button type="button" onClick={capturePhoto} className="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold hover:bg-emerald-700 transition-colors flex items-center">
