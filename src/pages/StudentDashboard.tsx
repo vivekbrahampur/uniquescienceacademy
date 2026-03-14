@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X } from 'lucide-react';
 import ExaminationPortal from '../components/ExaminationPortal';
+import FeePaymentTab from '../components/FeePaymentTab';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -82,6 +83,13 @@ export default function StudentDashboard() {
             <span>My Attendance</span>
           </button>
           <button
+            onClick={() => handleTabChange('payment')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'payment' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+          >
+            <IndianRupee className="h-5 w-5" />
+            <span>Pay Fees</span>
+          </button>
+          <button
             onClick={() => handleTabChange('fees')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'fees' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
@@ -137,6 +145,7 @@ export default function StudentDashboard() {
           {activeTab === 'results' && <ResultsTab student={student} />}
           {activeTab === 'attendance' && <AttendanceTab student={student} />}
           {activeTab === 'fees' && <FeesTab student={student} />}
+          {activeTab === 'payment' && <FeePaymentTab student={student} />}
           {activeTab === 'idcard' && <IDCardTab student={student} />}
           {activeTab === 'test' && <TestTab student={student} />}
           {activeTab === 'exam' && <ExaminationPortal student={student} />}
