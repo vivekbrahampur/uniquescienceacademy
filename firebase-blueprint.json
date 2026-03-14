@@ -68,6 +68,46 @@
       },
       "required": ["studentId", "class_name", "date", "status"]
     },
+    "Exam": {
+      "title": "Exam",
+      "description": "An examination",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "duration": { "type": "number" },
+        "start_time": { "type": "string", "format": "date-time" },
+        "end_time": { "type": "string", "format": "date-time" },
+        "is_active": { "type": "boolean" }
+      },
+      "required": ["title", "duration", "is_active"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "A question in an exam",
+      "type": "object",
+      "properties": {
+        "examId": { "type": "string" },
+        "question_text": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correct_option": { "type": "number" },
+        "marks": { "type": "number" }
+      },
+      "required": ["examId", "question_text", "options", "correct_option", "marks"]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "description": "Result of an exam taken by a student",
+      "type": "object",
+      "properties": {
+        "examId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "student_name": { "type": "string" },
+        "score": { "type": "number" },
+        "submitted_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["examId", "studentId", "score", "submitted_at"]
+    },
     "Fee": {
       "title": "Fee",
       "description": "Student fee payment record",
@@ -129,6 +169,18 @@
     "attendance": {
       "schema": "Attendance",
       "description": "Collection of all student attendance records"
+    },
+    "exams": {
+      "schema": "Exam",
+      "description": "Collection of all exams"
+    },
+    "questions": {
+      "schema": "Question",
+      "description": "Collection of all exam questions"
+    },
+    "exam_results": {
+      "schema": "ExamResult",
+      "description": "Collection of all exam results"
     },
     "fees": {
       "schema": "Fee",

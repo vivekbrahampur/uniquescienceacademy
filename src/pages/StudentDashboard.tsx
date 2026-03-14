@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X } from 'lucide-react';
+import ExaminationPortal from '../components/ExaminationPortal';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -95,6 +96,13 @@ export default function StudentDashboard() {
             <span>ID Card</span>
           </button>
           <button
+            onClick={() => handleTabChange('exam')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'exam' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+          >
+            <FileQuestion className="h-5 w-5" />
+            <span>Examination Portal</span>
+          </button>
+          <button
             onClick={() => handleTabChange('test')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'test' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
@@ -131,6 +139,7 @@ export default function StudentDashboard() {
           {activeTab === 'fees' && <FeesTab student={student} />}
           {activeTab === 'idcard' && <IDCardTab student={student} />}
           {activeTab === 'test' && <TestTab student={student} />}
+          {activeTab === 'exam' && <ExaminationPortal student={student} />}
           {activeTab === 'notices' && <NoticesTab />}
         </motion.div>
       </main>

@@ -325,6 +325,72 @@ async function startServer() {
     };
   };
 
+  // --- Exam Management ---
+  app.get('/api/exams', authenticateUser, async (req, res) => {
+    try {
+      const snapshot = await getDocs(collection(db, 'exams'));
+      const exams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(exams);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch exams' });
+    }
+  });
+
+  app.post('/api/admin/exams', authenticateAdmin, async (req, res) => {
+    try {
+      const exam = await addDoc(collection(db, 'exams'), { ...req.body, is_active: true });
+      res.json({ id: exam.id, success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create exam' });
+    }
+  });
+
+  app.post('/api/admin/exams/:id/questions', authenticateAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const batch = writeBatch(db);
+      const questions = req.body.questions;
+      questions.forEach((q: any) => {
+        const qRef = doc(collection(db, 'questions'));
+        batch.set(qRef, { ...q, examId: id });
+      });
+      await batch.commit();
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to add questions' });
+    }
+  });
+
+  app.get('/api/exams/:id/questions', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const qQuery = query(collection(db, 'questions'), where('examId', '==', id));
+      const snapshot = await getDocs(qQuery);
+      const questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(questions);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch questions' });
+    }
+  });
+
+  app.post('/api/student/exams/:id/submit', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { studentId, student_name, score, answers } = req.body;
+    try {
+      await addDoc(collection(db, 'exam_results'), {
+        examId: id,
+        studentId,
+        student_name,
+        score,
+        answers,
+        submitted_at: new Date().toISOString()
+      });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to submit exam' });
+    }
+  });
+
   // API Routes
   app.get('/api/settings', async (req, res) => {
     try {

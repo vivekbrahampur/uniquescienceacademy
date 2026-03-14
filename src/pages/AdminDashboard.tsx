@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, UserCog, AlertCircle, Camera, RefreshCw, Menu, Download } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import ExamManagement from '../components/ExamManagement';
 import ImageCropper from '../components/ImageCropper';
 
 const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.7): Promise<string> => {
@@ -226,6 +227,13 @@ export default function AdminDashboard() {
             <span>Content Control</span>
           </button>
           <button
+            onClick={() => handleTabChange('exam_management')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'exam_management' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <FileQuestion className="h-5 w-5" />
+            <span>Exam Management</span>
+          </button>
+          <button
             onClick={() => handleTabChange('tests')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'tests' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
@@ -311,6 +319,7 @@ export default function AdminDashboard() {
           {activeTab === 'results' && <ResultsTab students={students} onSuccess={() => { showSuccess('Result added successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'content' && <ContentTab onSuccess={() => showSuccess('Content updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'tests' && <TestsTab onSuccess={() => showSuccess('Question added successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'exam_management' && <ExamManagement />}
           {activeTab === 'security' && <SecurityTab onSuccess={() => showSuccess('Credentials updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'email_settings' && <EmailSettingsTab onSuccess={() => showSuccess('Email settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
