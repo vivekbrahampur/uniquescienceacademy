@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   LogOut, CheckCircle, Users, FileSpreadsheet, FileQuestion, 
-  CalendarCheck, FileText, IndianRupee, UserCog, AlertCircle 
+  CalendarCheck, FileText, IndianRupee, UserCog, AlertCircle, Menu, X 
 } from 'lucide-react';
 import { 
   ManageStudentsTab, AttendanceTab, FeesTab, ResultsTab, 
@@ -36,6 +36,7 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const teacherFetch = useTeacherFetch();
   const [activeTab, setActiveTab] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [successMsg, setSuccessMsg] = useState('');
@@ -66,7 +67,7 @@ export default function TeacherDashboard() {
     try {
       const res = await teacherFetch('/api/admin/students');
       const data = await res.json();
-      setStudents(data);
+      setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       showError('Failed to fetch students. Please check your connection.');
@@ -102,28 +103,58 @@ export default function TeacherDashboard() {
     setTimeout(() => setErrorMsg(''), 5000);
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+  };
+
   if (!teacherInfo) return null;
 
   const hasPermission = (p: string) => teacherInfo.permissions?.includes(p);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row relative">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-primary text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-50">
+        <h2 className="text-lg font-bold uppercase tracking-wider">Teacher Panel</h2>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg">
+          {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-primary text-white p-6 flex flex-col shadow-xl z-10">
-        <div className="flex items-center space-x-3 mb-10 pb-6 border-b border-white/10">
-          <div className="bg-white/20 p-2 rounded-lg">
-            <UserCog className="h-6 w-6 text-white" />
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-primary text-white shadow-xl transition-transform duration-300 transform 
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:relative md:translate-x-0 md:flex md:flex-col
+      `}>
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white/20 p-2 rounded-lg">
+              <UserCog className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Teacher Panel</h2>
+              <p className="text-xs text-blue-200 font-medium uppercase tracking-widest">{teacherInfo.name}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">Teacher Panel</h2>
-            <p className="text-xs text-blue-200 font-medium uppercase tracking-widest">{teacherInfo.name}</p>
-          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-white/10 rounded-lg">
+            <X className="h-6 w-6" />
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {hasPermission('manage_students') && (
             <button
-              onClick={() => setActiveTab('manage_students')}
+              onClick={() => handleTabChange('manage_students')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'manage_students' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <Users className="h-5 w-5" />
@@ -132,7 +163,7 @@ export default function TeacherDashboard() {
           )}
           {hasPermission('attendance') && (
             <button
-              onClick={() => setActiveTab('attendance')}
+              onClick={() => handleTabChange('attendance')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'attendance' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <CalendarCheck className="h-5 w-5" />
@@ -141,7 +172,7 @@ export default function TeacherDashboard() {
           )}
           {hasPermission('fees') && (
             <button
-              onClick={() => setActiveTab('fees')}
+              onClick={() => handleTabChange('fees')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'fees' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <IndianRupee className="h-5 w-5" />
@@ -150,7 +181,7 @@ export default function TeacherDashboard() {
           )}
           {hasPermission('results') && (
             <button
-              onClick={() => setActiveTab('results')}
+              onClick={() => handleTabChange('results')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'results' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <FileSpreadsheet className="h-5 w-5" />
@@ -159,7 +190,7 @@ export default function TeacherDashboard() {
           )}
           {hasPermission('notices') && (
             <button
-              onClick={() => setActiveTab('notice_panel')}
+              onClick={() => handleTabChange('notice_panel')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'notice_panel' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <FileText className="h-5 w-5" />
@@ -168,7 +199,7 @@ export default function TeacherDashboard() {
           )}
           {hasPermission('tests') && (
             <button
-              onClick={() => setActiveTab('tests')}
+              onClick={() => handleTabChange('tests')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'tests' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <FileQuestion className="h-5 w-5" />
@@ -177,7 +208,7 @@ export default function TeacherDashboard() {
           )}
           {hasPermission('exam_schedule') && (
             <button
-              onClick={() => setActiveTab('exam_schedule')}
+              onClick={() => handleTabChange('exam_schedule')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'exam_schedule' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-blue-100'}`}
             >
               <CalendarCheck className="h-5 w-5" />

@@ -13,12 +13,14 @@ export default function Footer() {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        if (data.contact_address || data.contact_email || data.contact_phone) {
-          setContact({
-            address: data.contact_address || contact.address,
-            email: data.contact_email || contact.email,
-            phone: data.contact_phone || contact.phone
-          });
+        if (data && !data.error) {
+          if (data.contact_address || data.contact_email || data.contact_phone) {
+            setContact({
+              address: data.contact_address || contact.address,
+              email: data.contact_email || contact.email,
+              phone: data.contact_phone || contact.phone
+            });
+          }
         }
       })
       .catch(err => console.error(err));

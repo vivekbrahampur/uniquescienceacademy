@@ -11,9 +11,11 @@ import ForgotPassword from './pages/ForgotPassword';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 export default function App() {
   return (
-    <ThemeProvider>
+    <ErrorBoundary>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
           <Navbar />
@@ -32,6 +34,6 @@ export default function App() {
           <Footer />
         </div>
       </BrowserRouter>
-    </ThemeProvider>
+    </ErrorBoundary>
   );
 }

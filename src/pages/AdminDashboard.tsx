@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, QrCode, UserCog, AlertCircle } from 'lucide-react';
+import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, UserCog, AlertCircle, Camera, RefreshCw, Menu } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import ImageCropper from '../components/ImageCropper';
 
 const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -71,6 +71,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const adminFetch = useAdminFetch();
   const [activeTab, setActiveTab] = useState('registration');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -89,7 +90,7 @@ export default function AdminDashboard() {
     try {
       const res = await adminFetch('/api/admin/students');
       const data = await res.json();
-      setStudents(data);
+      setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     }
@@ -110,128 +111,157 @@ export default function AdminDashboard() {
     setTimeout(() => setErrorMsg(''), 5000);
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row relative">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-primary text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-50">
+        <h2 className="text-lg font-bold uppercase tracking-wider">Admin Panel</h2>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg">
+          {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-primary text-white shadow-xl transition-colors duration-300 dark:bg-slate-900 dark:border-r dark:border-slate-800">
-        <div className="p-6 border-b border-white/10 dark:border-slate-800">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-primary text-white shadow-xl transition-transform duration-300 transform 
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:relative md:translate-x-0 md:flex md:flex-col
+        dark:bg-slate-900 dark:border-r dark:border-slate-800
+      `}>
+        <div className="p-6 border-b border-white/10 dark:border-slate-800 flex items-center justify-between">
           <h2 className="text-xl font-bold uppercase tracking-wider">Admin Panel</h2>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-white/10 rounded-lg">
+            <X className="h-6 w-6" />
+          </button>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
           <button
-            onClick={() => setActiveTab('registration')}
+            onClick={() => handleTabChange('registration')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'registration' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <UserPlus className="h-5 w-5" />
             <span>Quick Registration</span>
           </button>
           <button
-            onClick={() => setActiveTab('full_registration')}
+            onClick={() => handleTabChange('full_registration')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'full_registration' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <UserCheck className="h-5 w-5" />
             <span>Full Registration</span>
           </button>
           <button
-            onClick={() => setActiveTab('manage_students')}
+            onClick={() => handleTabChange('manage_students')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'manage_students' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Users className="h-5 w-5" />
             <span>Manage Students</span>
           </button>
           <button
-            onClick={() => setActiveTab('manage_teachers')}
+            onClick={() => handleTabChange('manage_teachers')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'manage_teachers' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <UserCog className="h-5 w-5" />
             <span>Manage Teachers</span>
           </button>
           <button
-            onClick={() => setActiveTab('attendance')}
+            onClick={() => handleTabChange('attendance')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'attendance' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <CalendarCheck className="h-5 w-5" />
             <span>Attendance</span>
           </button>
           <button
-            onClick={() => setActiveTab('fees')}
+            onClick={() => handleTabChange('fees')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'fees' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <IndianRupee className="h-5 w-5" />
             <span>Fees Management</span>
           </button>
           <button
-            onClick={() => setActiveTab('idcards')}
+            onClick={() => handleTabChange('idcards')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'idcards' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <IdCard className="h-5 w-5" />
             <span>ID Cards</span>
           </button>
           <button
-            onClick={() => setActiveTab('marksheet_settings')}
+            onClick={() => handleTabChange('marksheet_settings')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'marksheet_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <FileText className="h-5 w-5" />
             <span>Marksheet Settings</span>
           </button>
           <button
-            onClick={() => setActiveTab('results')}
+            onClick={() => handleTabChange('results')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'results' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <FileSpreadsheet className="h-5 w-5" />
             <span>Result Management</span>
           </button>
           <button
-            onClick={() => setActiveTab('content')}
+            onClick={() => handleTabChange('manage_results')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'manage_results' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <CheckCircle className="h-5 w-5" />
+            <span>Manage Toppers</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('content')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <ImageIcon className="h-5 w-5" />
             <span>Content Control</span>
           </button>
           <button
-            onClick={() => setActiveTab('tests')}
+            onClick={() => handleTabChange('tests')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'tests' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <FileQuestion className="h-5 w-5" />
             <span>Online Test Panel</span>
           </button>
           <button
-            onClick={() => setActiveTab('security')}
+            onClick={() => handleTabChange('security')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'security' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Shield className="h-5 w-5" />
             <span>Security</span>
           </button>
           <button
-            onClick={() => setActiveTab('email_settings')}
+            onClick={() => handleTabChange('email_settings')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'email_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Mail className="h-5 w-5" />
             <span>Email Settings</span>
           </button>
           <button
-            onClick={() => setActiveTab('theme_settings')}
+            onClick={() => handleTabChange('theme_settings')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'theme_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Palette className="h-5 w-5" />
             <span>Theme Settings</span>
           </button>
           <button
-            onClick={() => setActiveTab('qr_registration')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'qr_registration' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
-          >
-            <QrCode className="h-5 w-5" />
-            <span>QR Registration</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('exam_schedule')}
+            onClick={() => handleTabChange('exam_schedule')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'exam_schedule' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <CalendarCheck className="h-5 w-5" />
             <span>Exam Schedule</span>
           </button>
           <button
-            onClick={() => setActiveTab('notice_panel')}
+            onClick={() => handleTabChange('notice_panel')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'notice_panel' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <FileText className="h-5 w-5" />
@@ -273,6 +303,7 @@ export default function AdminDashboard() {
           {activeTab === 'full_registration' && <FullRegistrationTab onSuccess={() => { showSuccess('Student full registration successful. Confirmation email sent.'); fetchStudents(); }} showError={showError} />}
           {activeTab === 'manage_students' && <ManageStudentsTab students={students} onSuccess={() => { showSuccess('Operation successful'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'manage_teachers' && <ManageTeachersTab onSuccess={() => showSuccess('Teacher operation successful')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'manage_results' && <ManageToppersTab onSuccess={() => showSuccess('Topper result updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'attendance' && <AttendanceTab students={students} onSuccess={() => { showSuccess('Attendance saved successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'fees' && <FeesTab students={students} onSuccess={() => { showSuccess('Fee record added successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'idcards' && <IDCardsTab students={students} />}
@@ -283,7 +314,6 @@ export default function AdminDashboard() {
           {activeTab === 'security' && <SecurityTab onSuccess={() => showSuccess('Credentials updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'email_settings' && <EmailSettingsTab onSuccess={() => showSuccess('Email settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
-          {activeTab === 'qr_registration' && <QRScannerTab onSuccess={() => { showSuccess('Student registered via QR successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'exam_schedule' && <ExamScheduleTab onSuccess={() => showSuccess('Exam schedule updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'notice_panel' && <NoticePanelTab onSuccess={() => showSuccess('Notice updated successfully')} showSuccess={showSuccess} showError={showError} />}
         </motion.div>
@@ -565,69 +595,6 @@ function ThemeSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: ()
   );
 }
 
-export function QRScannerTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
-  const adminFetch = useAdminFetch();
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const [scanning, setScanning] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
-      }
-    };
-  }, []);
-
-  const startScanning = () => {
-    setScanning(true);
-    // Use setTimeout to ensure the element is rendered in the DOM before initializing the scanner
-    setTimeout(() => {
-      const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 }, false);
-      scannerRef.current = scanner;
-      scanner.render(
-        async (decodedText) => {
-          setScanning(false);
-          scanner.clear().catch(console.error);
-          try {
-            const studentData = JSON.parse(decodedText);
-            const res = await adminFetch('/api/admin/students', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(studentData)
-            });
-            if (res.ok) {
-              onSuccess();
-            } else {
-              if (showError) showError('Failed to register student from QR code.');
-            }
-          } catch (err) {
-            if (showError) showError('Invalid QR code data.');
-          }
-        },
-        (errorMessage) => {
-          console.log(errorMessage);
-        }
-      );
-    }, 0);
-  };
-
-  return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
-      <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 border-b pb-4">QR Student Registration</h3>
-      {!scanning ? (
-        <button 
-          onClick={startScanning}
-          className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm flex items-center"
-        >
-          <QrCode className="mr-2 h-5 w-5" />
-          Start QR Scanner
-        </button>
-      ) : (
-        <div id="qr-reader" className="w-full max-w-md"></div>
-      )}
-    </div>
-  );
-}
 
 export function ExamScheduleTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
@@ -990,6 +957,177 @@ export function ResultsTab({ students, onSuccess, showSuccess, showError }: { st
   );
 }
 
+function ManageToppersTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
+  const adminFetch = useAdminFetch();
+  const [results, setResults] = useState<any[]>([]);
+  const [newResult, setNewResult] = useState({ name: '', roll_no: '', marks: '', photo_url: '' });
+  const [loading, setLoading] = useState(false);
+
+  const fetchResults = async () => {
+    try {
+      const res = await adminFetch('/api/results');
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data);
+      }
+    } catch (err) {
+      console.error('Error fetching toppers:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchResults();
+  }, []);
+
+  const handleAddResult = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newResult.photo_url) {
+      if (showError) showError('Please upload a student photo');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await adminFetch('/api/admin/results/public', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newResult)
+      });
+      if (res.ok) {
+        setNewResult({ name: '', roll_no: '', marks: '', photo_url: '' });
+        fetchResults();
+        onSuccess();
+        if (showSuccess) showSuccess('Topper result added successfully');
+      } else {
+        const errorData = await res.json();
+        if (showError) showError(errorData.error || 'Failed to add result');
+      }
+    } catch (err) {
+      console.error('Error adding result:', err);
+      if (showError) showError('Failed to add result');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteResult = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this topper result?')) return;
+    try {
+      const res = await adminFetch(`/api/admin/results/public/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchResults();
+        if (showSuccess) showSuccess('Topper result deleted successfully');
+      } else {
+        if (showError) showError('Failed to delete result');
+      }
+    } catch (err) {
+      console.error('Error deleting result:', err);
+      if (showError) showError('Failed to delete result');
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4 text-blue-800">Add Student Result (Topper)</h3>
+        <form onSubmit={handleAddResult} className="space-y-6 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Student Name</label>
+              <input required type="text" value={newResult.name} onChange={e => setNewResult({...newResult, name: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Full Name" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Roll Number</label>
+              <input required type="text" value={newResult.roll_no} onChange={e => setNewResult({...newResult, roll_no: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Roll No." />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Marks / Percentage</label>
+            <input required type="text" value={newResult.marks} onChange={e => setNewResult({...newResult, marks: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. 98%" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Student Photo</label>
+            <div className="flex items-center space-x-4">
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      const compressed = await compressImage(file, 400, 400);
+                      setNewResult({...newResult, photo_url: compressed});
+                    } catch (err) {
+                      if (showError) showError('Failed to process image');
+                    }
+                  }
+                }} 
+                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-slate-50" 
+              />
+            </div>
+            {newResult.photo_url && (
+              <div className="mt-4 relative inline-block">
+                <img src={newResult.photo_url} alt="Preview" className="h-32 w-32 object-cover rounded-xl border-2 border-blue-500 shadow-md" />
+                <button 
+                  type="button"
+                  onClick={() => setNewResult({...newResult, photo_url: ''})}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+          <button disabled={loading} type="submit" className="bg-blue-800 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-900 transition-all shadow-md disabled:opacity-50 flex items-center">
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                Adding...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-5 w-5" />
+                Add Topper Result
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4 flex items-center">
+          <CheckCircle className="mr-2 h-6 w-6 text-emerald-500" />
+          Manage Toppers ({results.length})
+        </h3>
+        {results.length === 0 ? (
+          <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+            <p className="text-slate-500">No topper results added yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {results.map(res => (
+              <div key={res.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center space-x-4 relative group hover:shadow-md transition-all">
+                <img src={res.photo_url || 'https://picsum.photos/seed/student/200/200'} alt={res.name} className="w-20 h-20 rounded-xl object-cover border-2 border-white shadow-sm" />
+                <div className="flex-1">
+                  <p className="font-bold text-slate-800 text-lg">{res.name}</p>
+                  <p className="text-sm text-slate-500">Roll: {res.roll_no}</p>
+                  <p className="text-base font-bold text-blue-600 mt-1">{res.marks}</p>
+                </div>
+                <button 
+                  onClick={() => handleDeleteResult(res.id)}
+                  className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-700 p-2 bg-white rounded-full shadow-sm"
+                  title="Delete Topper"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [logoUrl, setLogoUrl] = useState('');
@@ -998,6 +1136,7 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
   const [contactAddress, setContactAddress] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState('');
   const [heroTitle, setHeroTitle] = useState('');
   const [heroSubtitle, setHeroSubtitle] = useState('');
@@ -1037,28 +1176,21 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
   }, []);
 
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const newImages: string[] = [];
-    let processed = 0;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    // Reset input
+    e.target.value = '';
+  };
 
-    Array.from(files).forEach(async (file: File) => {
-      try {
-        const compressedImage = await compressImage(file);
-        newImages.push(compressedImage);
-        processed++;
-        if (processed === files.length) {
-          setGalleryImages(prev => [...prev, ...newImages]);
-        }
-      } catch (error) {
-        console.error("Error compressing image:", error);
-        processed++;
-        if (processed === files.length) {
-          setGalleryImages(prev => [...prev, ...newImages]);
-        }
-      }
-    });
+  const onCropComplete = async (croppedImage: string) => {
+    setGalleryImages(prev => [...prev, croppedImage]);
+    setImageToCrop(null);
   };
 
   const removeGalleryImage = (index: number) => {
@@ -1172,11 +1304,10 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
             <input type="text" value={newsTicker} onChange={e => setNewsTicker(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Hero Background Images (Upload Multiple)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Hero Background Images (Upload One by One to Crop)</label>
             <input 
               type="file" 
               accept="image/*" 
-              multiple
               onChange={handleGalleryUpload}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-slate-50" 
             />
@@ -1331,6 +1462,15 @@ function ContentTab({ onSuccess, showSuccess, showError }: { onSuccess: () => vo
         </div>
         <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">Update Content</button>
       </form>
+
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          onCropComplete={onCropComplete}
+          onCancel={() => setImageToCrop(null)}
+          aspect={16 / 9}
+        />
+      )}
     </div>
   );
 }
@@ -1831,19 +1971,36 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
   });
   const [loading, setLoading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setShowCamera(true);
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+      });
+      setCameraStream(stream);
+      setShowCamera(true);
+      // Use setTimeout to ensure video element is rendered
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(err => console.error("Video play error:", err));
+        }
+      }, 100);
     } catch (err) {
-      if (showError) showError('Could not access camera.');
+      console.error("Camera access error:", err);
+      if (showError) showError('Could not access camera. Please check permissions.');
     }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
   };
 
   const capturePhoto = () => {
@@ -1853,11 +2010,9 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
         canvasRef.current.width = videoRef.current.videoWidth;
         canvasRef.current.height = videoRef.current.videoHeight;
         context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.7);
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.8);
         setFormData({ ...formData, photo_url: dataUrl });
-        setShowCamera(false);
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+        stopCamera();
       }
     }
   };
@@ -1910,22 +2065,43 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
       
       <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+          <div className="space-y-4">
             <label className="block text-sm font-medium text-slate-700 mb-2">Student Photo</label>
-            <div className="flex flex-col gap-2">
-              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-              <button type="button" onClick={startCamera} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors">Take Photo</button>
-            </div>
-            {showCamera && (
-              <div className="mt-4">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-auto rounded-lg border border-slate-300" />
-                <button type="button" onClick={capturePhoto} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Capture</button>
-                <canvas ref={canvasRef} className="hidden" />
+            
+            {!showCamera ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative h-32 w-32 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                    {formData.photo_url ? (
+                      <img src={formData.photo_url} alt="Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <Camera className="h-8 w-8 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1">
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    <button type="button" onClick={startCamera} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors flex items-center justify-center text-sm font-medium">
+                      <Camera className="mr-2 h-4 w-4" />
+                      Take Photo
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
-            {formData.photo_url && !showCamera && (
-              <div className="mt-2">
-                <img src={formData.photo_url} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-300" />
+            ) : (
+              <div className="bg-slate-900 p-4 rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative aspect-video bg-black rounded-xl overflow-hidden mb-4">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                </div>
+                <div className="flex items-center justify-center space-x-4">
+                  <button type="button" onClick={capturePhoto} className="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold hover:bg-emerald-700 transition-colors flex items-center">
+                    <Camera className="mr-2 h-5 w-5" />
+                    Capture Photo
+                  </button>
+                  <button type="button" onClick={stopCamera} className="bg-white/10 text-white px-6 py-2 rounded-full font-bold hover:bg-white/20 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+                <canvas ref={canvasRef} className="hidden" />
               </div>
             )}
           </div>
@@ -2500,6 +2676,44 @@ export function ManageStudentsTab({ students, onSuccess, showSuccess, showError 
     );
   };
 
+  const downloadCSV = () => {
+    if (students.length === 0) {
+      if (showError) showError('No student data available to download');
+      return;
+    }
+
+    const headers = ['ID', 'Name', 'Roll No', 'Class', 'Father Name', 'Mother Name', 'Email', 'Phone', 'DOB', 'Gender', 'Address', 'Created At'];
+    const rows = students.map(s => [
+      s.id,
+      s.name,
+      s.roll_no,
+      s.class_name,
+      s.father_name || '',
+      s.mother_name || '',
+      s.email || '',
+      s.phone || '',
+      s.dob || '',
+      s.gender || '',
+      s.address || '',
+      s.createdAt || ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `students_data_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-8">
       {/* Class-wise Stats */}
@@ -2547,6 +2761,14 @@ export function ManageStudentsTab({ students, onSuccess, showSuccess, showError 
                 className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full md:w-64"
               />
             </div>
+            <button 
+              onClick={downloadCSV}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center shadow-sm"
+              title="Download Student Data (CSV for Google Sheets)"
+            >
+              <FileSpreadsheet className="mr-2 h-5 w-5" />
+              Download Data
+            </button>
           </div>
         </div>
 

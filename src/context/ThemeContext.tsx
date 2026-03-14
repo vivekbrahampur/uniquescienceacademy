@@ -38,7 +38,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        if (data) {
+        if (data && !data.error) {
           setSettings({
             primaryColor: data.primary_color || defaultSettings.primaryColor,
             secondaryColor: data.secondary_color || defaultSettings.secondaryColor,
@@ -68,9 +68,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Apply custom colors as CSS variables
     const root = document.documentElement;
     if (settings.primaryColor) {
-      root.style.setProperty('--color-primary', settings.primaryColor);
-      root.style.setProperty('--color-secondary', settings.secondaryColor);
-      root.style.setProperty('--color-accent', settings.accentColor);
+      root.style.setProperty('--school-primary', settings.primaryColor);
+      root.style.setProperty('--school-secondary', settings.secondaryColor);
+      root.style.setProperty('--school-accent', settings.accentColor);
     }
   }, [settings]);
 

@@ -14,7 +14,7 @@ export default function Navbar() {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        if (data.logo_url) setLogoUrl(data.logo_url);
+        if (data && data.logo_url) setLogoUrl(data.logo_url);
       })
       .catch(err => console.error(err));
   }, []);

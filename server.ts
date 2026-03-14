@@ -497,6 +497,52 @@ async function startServer() {
     }
   });
 
+  app.get('/api/results', async (req, res) => {
+    try {
+      const resultsSnap = await getDocs(collection(db, 'public_results'));
+      const results = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch results' });
+    }
+  });
+
+  app.post('/api/results', async (req, res) => {
+    const { name, roll_no, marks, photo_url } = req.body;
+    try {
+      const docRef = await addDoc(collection(db, 'public_results'), {
+        name, roll_no, marks, photo_url,
+        createdAt: new Date().toISOString()
+      });
+      res.json({ id: docRef.id, success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to save result' });
+    }
+  });
+
+  app.delete('/api/admin/results/public/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    try {
+      await deleteDoc(doc(db, 'public_results', id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete result' });
+    }
+  });
+
+  app.post('/api/admin/results/public', authenticateUser, async (req, res) => {
+    const { name, roll_no, marks, photo_url } = req.body;
+    try {
+      const docRef = await addDoc(collection(db, 'public_results'), {
+        name, roll_no, marks, photo_url,
+        createdAt: new Date().toISOString()
+      });
+      res.json({ id: docRef.id, success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to save result' });
+    }
+  });
+
   // Admin: Teachers
   app.get('/api/admin/teachers', authenticateAdmin, async (req, res) => {
     try {

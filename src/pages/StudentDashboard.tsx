@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell } from 'lucide-react';
+import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X } from 'lucide-react';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('results');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const authData = localStorage.getItem('studentAuth');
@@ -22,55 +23,86 @@ export default function StudentDashboard() {
     navigate('/student/login');
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+  };
+
   if (!student) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row print:bg-white print:block">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row print:bg-white print:block relative">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-blue-900 text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-50 print:hidden">
+        <h2 className="text-lg font-bold uppercase tracking-wider">Student Portal</h2>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg">
+          {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-blue-900 text-white shadow-xl print:hidden">
-        <div className="p-6 border-b border-blue-800">
-          <h2 className="text-xl font-bold uppercase tracking-wider">Student Portal</h2>
-          <p className="text-sm text-blue-200 mt-2">{student.name}</p>
-          <p className="text-xs text-blue-300">Class: {student.class_name} | Roll: {student.roll_no}</p>
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-blue-900 text-white shadow-xl transition-transform duration-300 transform 
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:relative md:translate-x-0 md:flex md:flex-col
+        print:hidden
+      `}>
+        <div className="p-6 border-b border-blue-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold uppercase tracking-wider">Student Portal</h2>
+            <p className="text-sm text-blue-200 mt-2">{student.name}</p>
+            <p className="text-xs text-blue-300">Class: {student.class_name} | Roll: {student.roll_no}</p>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-white/10 rounded-lg">
+            <X className="h-6 w-6" />
+          </button>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 overflow-y-auto flex-1">
           <button
-            onClick={() => setActiveTab('results')}
+            onClick={() => handleTabChange('results')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'results' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
             <FileText className="h-5 w-5" />
             <span>My Results</span>
           </button>
           <button
-            onClick={() => setActiveTab('attendance')}
+            onClick={() => handleTabChange('attendance')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'attendance' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
             <CalendarCheck className="h-5 w-5" />
             <span>My Attendance</span>
           </button>
           <button
-            onClick={() => setActiveTab('fees')}
+            onClick={() => handleTabChange('fees')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'fees' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
             <IndianRupee className="h-5 w-5" />
             <span>Fee Receipts</span>
           </button>
           <button
-            onClick={() => setActiveTab('idcard')}
+            onClick={() => handleTabChange('idcard')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'idcard' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
             <IdCard className="h-5 w-5" />
             <span>ID Card</span>
           </button>
           <button
-            onClick={() => setActiveTab('test')}
+            onClick={() => handleTabChange('test')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'test' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
             <Edit3 className="h-5 w-5" />
             <span>Online Test</span>
           </button>
           <button
-            onClick={() => setActiveTab('notices')}
+            onClick={() => handleTabChange('notices')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'notices' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
           >
             <Bell className="h-5 w-5" />

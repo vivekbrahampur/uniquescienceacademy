@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ChevronRight, GraduationCap, BookOpen, Users, Quote, MapPin, Phone, Mail } from 'lucide-react';
+import { ChevronRight, GraduationCap, BookOpen, Users, Quote, MapPin, Phone, Mail, Camera, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
@@ -27,13 +27,92 @@ export default function Home() {
     result_section_enabled: false
   });
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [results, setResults] = useState<any[]>([]);
+  const [resultForm, setResultForm] = useState({ name: '', roll_no: '', marks: '', photo_url: '' });
+  const [showCamera, setShowCamera] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const fetchResults = () => {
+    fetch('/api/results')
+      .then(res => res.json())
+      .then(data => setResults(data))
+      .catch(err => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchResults();
+  }, []);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setShowCamera(true);
+      }
+    } catch (err) {
+      alert('Could not access camera');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.7);
+        setResultForm({ ...resultForm, photo_url: dataUrl });
+        stopCamera();
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      setShowCamera(false);
+    }
+  };
+
+  const handleResultSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultForm)
+      });
+      if (res.ok) {
+        setResultForm({ name: '', roll_no: '', marks: '', photo_url: '' });
+        fetchResults();
+        alert('Result saved successfully!');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        console.log('API settings data:', data);
-        setSettings(data);
+        if (data && !data.error) {
+          console.log('API settings data:', data);
+          setSettings(prev => ({
+            ...prev,
+            ...data,
+            gallery_images: Array.isArray(data.gallery_images) ? data.gallery_images : prev.gallery_images,
+            testimonials: Array.isArray(data.testimonials) ? data.testimonials : prev.testimonials
+          }));
+        }
       })
       .catch(err => console.error(err));
   }, []);
@@ -269,23 +348,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Result Section */}
-      {settings.result_section_enabled && (
-        <section className="py-20 bg-slate-50 dark:bg-slate-950">
+      {/* Our Toppers / Results Section */}
+      {settings.result_section_enabled && results.length > 0 && (
+        <section className="py-24 bg-slate-50 dark:bg-slate-950">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-extrabold text-primary dark:text-white uppercase tracking-wider mb-10 text-center font-serif">Student Result Submission</h2>
-            <div className="max-w-md mx-auto bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800">
-              <form className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Roll Number</label>
-                  <input type="text" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Enter Roll Number" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Student Photo</label>
-                  <button type="button" className="w-full bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-900 transition-colors">Take Photo</button>
-                </div>
-                <button type="submit" className="w-full bg-primary text-white py-3 rounded-lg font-bold uppercase tracking-widest hover:bg-primary/90 transition-all">Save Result</button>
-              </form>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-extrabold text-primary dark:text-white uppercase tracking-wider mb-4 font-serif">Our Toppers & Achievements</h2>
+              <div className="w-24 h-1.5 bg-accent mx-auto"></div>
+              <p className="mt-6 text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-lg italic">"Success is the result of preparation, hard work, and learning from failure."</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+              {results.map((res, idx) => (
+                <motion.div 
+                  key={res.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg overflow-hidden border border-slate-100 dark:border-slate-800 group hover:shadow-2xl transition-all duration-300"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={res.photo_url || 'https://picsum.photos/seed/student/400/400'} 
+                      alt={res.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                    <div className="absolute bottom-4 left-4 right-4 text-white">
+                      <p className="text-xs uppercase tracking-widest font-bold text-accent mb-1">Roll No: {res.roll_no}</p>
+                      <h4 className="text-xl font-bold truncate">{res.name}</h4>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-primary text-white text-center">
+                    <p className="text-2xl font-black text-accent">{res.marks}</p>
+                    <p className="text-[10px] uppercase tracking-tighter opacity-70">Academic Excellence</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="mt-16 text-center">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">Showing top {results.length} student results.</p>
             </div>
           </div>
         </section>
