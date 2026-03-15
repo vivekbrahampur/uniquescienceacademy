@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export default function Navbar() {
   const { settings } = useTheme();
-  const [logoUrl, setLogoUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('https://picsum.photos/seed/schoollogo/200/200');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 

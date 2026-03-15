@@ -8,7 +8,7 @@ export default function Home() {
   const { settings: themeSettings } = useTheme();
   console.log('Home themeSettings:', themeSettings);
   const [settings, setSettings] = useState({ 
-    logo_url: '', 
+    logo_url: 'https://picsum.photos/seed/schoollogo/200/200', 
     gallery_images: [], 
     testimonials: [],
     school_name: themeSettings?.schoolName || 'Unique Science Academy',
