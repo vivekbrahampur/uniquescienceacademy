@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 
-export default function FeePaymentTab({ student }: { student: any }) {
+export default function FeePaymentTab({ student, showSuccess, showError }: { student: any, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const [amount, setAmount] = useState('');
   const [qrCode, setQrCode] = useState('');
   const [upiId, setUpiId] = useState('7325065925@ybl'); // Updated UPI ID
@@ -13,8 +13,10 @@ export default function FeePaymentTab({ student }: { student: any }) {
     try {
       const qr = await QRCode.toDataURL(upiString);
       setQrCode(qr);
+      if (showSuccess) showSuccess('Payment QR generated successfully. Please scan and pay.');
     } catch (err) {
       console.error(err);
+      if (showError) showError('Failed to generate QR code');
     }
   };
 

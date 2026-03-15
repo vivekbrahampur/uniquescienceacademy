@@ -288,9 +288,9 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
         {successMsg && (
-          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex items-center shadow-sm">
-            <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-            <p className="text-sm text-green-700 font-medium">{successMsg}</p>
+          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex flex-col items-center shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+            <p className="text-sm text-green-700 font-bold mb-2">{successMsg}</p>
+            <CheckCircle className="h-8 w-8 text-green-500" />
           </div>
         )}
 

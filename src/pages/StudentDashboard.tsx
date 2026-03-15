@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X } from 'lucide-react';
 import ExaminationPortal from '../components/ExaminationPortal';
-import FeePaymentTab from '../components/FeePaymentTab';
+import FeePaymentTab from './FeePaymentTab';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('results');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const authData = localStorage.getItem('studentAuth');
@@ -28,6 +30,16 @@ export default function StudentDashboard() {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setIsSidebarOpen(false);
+  };
+
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 5000);
   };
 
   if (!student) return null;
@@ -136,6 +148,20 @@ export default function StudentDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 p-6 md:p-10 overflow-y-auto print:p-0 print:overflow-visible">
+        {successMsg && (
+          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex flex-col items-center shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+            <p className="text-sm text-green-700 font-bold mb-2">{successMsg}</p>
+            <CheckCircle className="h-8 w-8 text-green-500" />
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-center shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+            <p className="text-sm text-red-700 font-medium">{errorMsg}</p>
+          </div>
+        )}
+
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 10 }}
@@ -145,10 +171,10 @@ export default function StudentDashboard() {
           {activeTab === 'results' && <ResultsTab student={student} />}
           {activeTab === 'attendance' && <AttendanceTab student={student} />}
           {activeTab === 'fees' && <FeesTab student={student} />}
-          {activeTab === 'payment' && <FeePaymentTab student={student} />}
+          {activeTab === 'payment' && <FeePaymentTab student={student} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'idcard' && <IDCardTab student={student} />}
           {activeTab === 'test' && <TestTab student={student} />}
-          {activeTab === 'exam' && <ExaminationPortal student={student} />}
+          {activeTab === 'exam' && <ExaminationPortal student={student} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'notices' && <NoticesTab />}
         </motion.div>
       </main>

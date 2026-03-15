@@ -3,11 +3,13 @@ import { Play } from 'lucide-react';
 
 declare const katex: any;
 
-export default function ExaminationPortal({ student }: { student: any }) {
+export default function ExaminationPortal({ student, showSuccess, showError }: { student: any, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const [exams, setExams] = useState<any[]>([]);
   const [selectedExam, setSelectedExam] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [answers, setAnswers] = useState<any>({});
+  const [submitting, setSubmitting] = useState(false);
   const mathRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
@@ -40,6 +42,43 @@ export default function ExaminationPortal({ student }: { student: any }) {
     if (res.ok) setQuestions(await res.json());
   };
 
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setAnswers((prev: any) => ({ ...prev, [questionId]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedExam) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/student/exams/${selectedExam.id}/submit`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('studentToken')}`
+        },
+        body: JSON.stringify({
+          studentId: student.id,
+          student_name: student.name,
+          score: 0, // Score calculation would happen on server or here
+          answers: answers
+        })
+      });
+
+      if (res.ok) {
+        if (showSuccess) showSuccess('Exam submitted successfully!');
+        setSelectedExam(null);
+        setAnswers({});
+      } else {
+        if (showError) showError('Failed to submit exam');
+      }
+    } catch (err) {
+      console.error(err);
+      if (showError) showError('An error occurred during submission');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -63,14 +102,42 @@ export default function ExaminationPortal({ student }: { student: any }) {
         </div>
       ) : (
         <div className="space-y-6">
-          <h4 className="text-xl font-bold">{selectedExam.title}</h4>
+          <div className="flex justify-between items-center">
+            <h4 className="text-xl font-bold">{selectedExam.title}</h4>
+            <button 
+              onClick={handleSubmit} 
+              disabled={submitting}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50"
+            >
+              {submitting ? 'Submitting...' : 'Submit Exam'}
+            </button>
+          </div>
           {questions.map((q, i) => (
             <div key={q.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <p className="font-bold mb-2">{language === 'en' ? q.question_en : q.question_hi}</p>
+              <p className="font-bold mb-4">{language === 'en' ? q.question_en : q.question_hi}</p>
               {q.math_formula && <div ref={el => mathRefs.current[i] = el} className="mb-4" />}
-              {q.image_url && <img src={q.image_url} alt="Question" className="max-w-full mb-4" referrerPolicy="no-referrer" />}
+              {q.image_url && <img src={q.image_url} alt="Question" className="max-w-full mb-4 rounded-lg" referrerPolicy="no-referrer" />}
+              
+              <div className="space-y-2">
+                <textarea 
+                  placeholder="Write your answer here..."
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  rows={3}
+                  value={answers[q.id] || ''}
+                  onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                />
+              </div>
             </div>
           ))}
+          <div className="flex justify-center pt-4">
+            <button 
+              onClick={handleSubmit} 
+              disabled={submitting}
+              className="bg-green-600 text-white px-10 py-3 rounded-xl font-bold text-lg hover:bg-green-700 shadow-lg disabled:opacity-50"
+            >
+              {submitting ? 'Submitting...' : 'Final Submit Exam'}
+            </button>
+          </div>
         </div>
       )}
     </div>
