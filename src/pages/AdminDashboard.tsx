@@ -790,6 +790,60 @@ export function NoticePanelTab({ onSuccess, showSuccess, showError }: { onSucces
 function RegistrationTab({ onSuccess, showError }: { onSuccess: () => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [formData, setFormData] = useState({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const startCamera = async (mode?: 'user' | 'environment') => {
+    try {
+      const currentMode = mode || facingMode;
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: currentMode, width: { ideal: 640 }, height: { ideal: 480 } } 
+      });
+      setCameraStream(stream);
+      setShowCamera(true);
+      setFacingMode(currentMode);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      if (showError) showError('Could not access camera. Please ensure you have given permission.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  const toggleCamera = async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+    await startCamera(newMode);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.8);
+        setFormData({ ...formData, photo_url: dataUrl });
+        stopCamera();
+      }
+    }
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -833,10 +887,44 @@ function RegistrationTab({ onSuccess, showError }: { onSuccess: () => void, show
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-2">Student Photo</label>
-            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-            {formData.photo_url && (
-              <div className="mt-2">
-                <img src={formData.photo_url} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-300" />
+            {!showCamera ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="relative h-24 w-24 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                    {formData.photo_url ? (
+                      <img src={formData.photo_url} alt="Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <Camera className="h-8 w-8 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1">
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    <button type="button" onClick={() => startCamera()} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors flex items-center justify-center text-sm font-medium">
+                      <Camera className="mr-2 h-4 w-4" />
+                      Take Photo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-900 p-4 rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative aspect-video bg-black rounded-xl overflow-hidden mb-4">
+                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                </div>
+                <div className="flex items-center justify-center space-x-4">
+                  <button type="button" onClick={capturePhoto} className="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold hover:bg-emerald-700 transition-colors flex items-center">
+                    <Camera className="mr-2 h-5 w-5" />
+                    Capture
+                  </button>
+                  <button type="button" onClick={toggleCamera} className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-colors flex items-center">
+                    <RefreshCw className="mr-2 h-5 w-5" />
+                    Switch
+                  </button>
+                  <button type="button" onClick={stopCamera} className="bg-white/10 text-white px-6 py-2 rounded-full font-bold hover:bg-white/20 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+                <canvas ref={canvasRef} className="hidden" />
               </div>
             )}
           </div>
@@ -2102,16 +2190,19 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
   const [loading, setLoading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const startCamera = async () => {
+  const startCamera = async (mode?: 'user' | 'environment') => {
     try {
+      const currentMode = mode || facingMode;
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+        video: { facingMode: currentMode, width: { ideal: 640 }, height: { ideal: 480 } } 
       });
       setCameraStream(stream);
       setShowCamera(true);
+      setFacingMode(currentMode);
       // Use setTimeout to ensure video element is rendered
       setTimeout(() => {
         if (videoRef.current) {
@@ -2131,6 +2222,14 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
       setCameraStream(null);
     }
     setShowCamera(false);
+  };
+
+  const toggleCamera = async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+    await startCamera(newMode);
   };
 
   const capturePhoto = () => {
@@ -2225,7 +2324,11 @@ function FullRegistrationTab({ onSuccess, showError }: { onSuccess: () => void, 
                 <div className="flex items-center justify-center space-x-4">
                   <button type="button" onClick={capturePhoto} className="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold hover:bg-emerald-700 transition-colors flex items-center">
                     <Camera className="mr-2 h-5 w-5" />
-                    Capture Photo
+                    Capture
+                  </button>
+                  <button type="button" onClick={toggleCamera} className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-colors flex items-center">
+                    <RefreshCw className="mr-2 h-5 w-5" />
+                    Switch
                   </button>
                   <button type="button" onClick={stopCamera} className="bg-white/10 text-white px-6 py-2 rounded-full font-bold hover:bg-white/20 transition-colors">
                     Cancel

@@ -30,6 +30,7 @@ export default function Home() {
   const [results, setResults] = useState<any[]>([]);
   const [resultForm, setResultForm] = useState({ name: '', roll_no: '', marks: '', photo_url: '' });
   const [showCamera, setShowCamera] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,16 +46,24 @@ export default function Home() {
     fetchResults();
   }, []);
 
-  const startCamera = async () => {
+  const startCamera = async (mode?: 'user' | 'environment') => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const currentMode = mode || facingMode;
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentMode } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setShowCamera(true);
+        setFacingMode(currentMode);
       }
     } catch (err) {
       alert('Could not access camera');
     }
+  };
+
+  const toggleCamera = async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    stopCamera();
+    await startCamera(newMode);
   };
 
   const capturePhoto = () => {
