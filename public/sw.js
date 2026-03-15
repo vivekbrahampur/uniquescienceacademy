@@ -1,15 +1,29 @@
-const CACHE_NAME = 'school-app-v1';
+const CACHE_NAME = 'usa-portal-v1';
 const ASSETS = [
   '/',
   '/index.html',
-  '/src/main.tsx',
-  '/src/App.tsx',
-  '/src/index.css'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
 
