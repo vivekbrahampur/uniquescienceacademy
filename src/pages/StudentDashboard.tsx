@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X, BookOpen } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import ExaminationPortal from '../components/ExaminationPortal';
 import FeePaymentTab from './FeePaymentTab';
 import StudyMaterialView from '../components/StudyMaterialView';
@@ -467,8 +468,19 @@ function ResultsTab({ student }: { student: any }) {
         </div>
 
         {/* Remarks */}
-        <div className="border-2 border-slate-800 p-2 mb-16 relative z-10 font-bold bg-white/90">
+        <div className="border-2 border-slate-800 p-2 mb-6 relative z-10 font-bold bg-white/90">
           Class Teacher Remarks : 
+        </div>
+
+        {/* Contact Us */}
+        <div className="flex items-center justify-between border-2 border-slate-800 p-4 mb-6 relative z-10 bg-white/90">
+            <div>
+                <p className="font-bold">Contact Us:</p>
+                <p className="text-sm">{marksheetAddress}</p>
+                <p className="text-sm">Mob: {marksheetPhone}</p>
+                <p className="text-sm">Email: {marksheetEmail}</p>
+            </div>
+            <QRCodeSVG value={`Address: ${marksheetAddress}, Mob: ${marksheetPhone}, Email: ${marksheetEmail}`} size={80} />
         </div>
 
         {/* Signatures */}
