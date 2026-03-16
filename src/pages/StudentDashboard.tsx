@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X } from 'lucide-react';
+import { FileText, Edit3, LogOut, Download, CheckCircle, AlertCircle, FileQuestion, CalendarCheck, IndianRupee, IdCard, Bell, Menu, X, BookOpen } from 'lucide-react';
 import ExaminationPortal from '../components/ExaminationPortal';
 import FeePaymentTab from './FeePaymentTab';
+import StudyMaterialView from '../components/StudyMaterialView';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -137,6 +138,13 @@ export default function StudentDashboard() {
             <span>Notices</span>
           </button>
           <button
+            onClick={() => handleTabChange('study_materials')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'study_materials' ? 'bg-blue-800 text-yellow-400' : 'hover:bg-blue-800'}`}
+          >
+            <BookOpen className="h-5 w-5" />
+            <span>Study Materials</span>
+          </button>
+          <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-600 transition-colors mt-8 text-red-200 hover:text-white"
           >
@@ -176,6 +184,7 @@ export default function StudentDashboard() {
           {activeTab === 'test' && <TestTab student={student} />}
           {activeTab === 'exam' && <ExaminationPortal student={student} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'notices' && <NoticesTab />}
+          {activeTab === 'study_materials' && <StudyMaterialView studentClass={student.class_name} />}
         </motion.div>
       </main>
     </div>

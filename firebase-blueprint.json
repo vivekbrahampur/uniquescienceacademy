@@ -147,6 +147,38 @@
         "smtp_user": { "type": "string" },
         "smtp_pass": { "type": "string" }
       }
+    },
+    "StudyMaterial": {
+      "title": "StudyMaterial",
+      "description": "Study material for a class and subject",
+      "type": "object",
+      "properties": {
+        "class_name": { "type": "string" },
+        "subject": { "type": "string" },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "links": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "url": { "type": "string" }
+                  },
+                  "required": ["title", "url"]
+                }
+              }
+            },
+            "required": ["title", "links"]
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["class_name", "subject", "topics"]
     }
   },
   "firestore": {
@@ -189,6 +221,10 @@
     "settings": {
       "schema": "Settings",
       "description": "Global settings document (ID: global)"
+    },
+    "study_materials": {
+      "schema": "StudyMaterial",
+      "description": "Collection of all study materials"
     }
   }
 }

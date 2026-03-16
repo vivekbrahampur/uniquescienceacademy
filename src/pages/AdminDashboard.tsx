@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, UserCog, AlertCircle, Camera, RefreshCw, Menu, Download } from 'lucide-react';
+import { UserPlus, FileSpreadsheet, Image as ImageIcon, FileQuestion, LogOut, CheckCircle, Shield, Mail, UserCheck, CalendarCheck, IndianRupee, IdCard, Users, Trash2, ArrowUpCircle, Search, FileText, ArrowRight, Plus, X, Palette, UserCog, AlertCircle, Camera, RefreshCw, Menu, Download, BookOpen } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import ExamManagement from '../components/ExamManagement';
 import ImageCropper from '../components/ImageCropper';
+import StudyMaterialManagement from '../components/StudyMaterialManagement';
 
 const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -276,6 +277,13 @@ export default function AdminDashboard() {
             <span>Notice Panel</span>
           </button>
           <button
+            onClick={() => handleTabChange('study_materials')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'study_materials' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
+          >
+            <BookOpen className="h-5 w-5" />
+            <span>Study Materials</span>
+          </button>
+          <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-600 transition-colors mt-8 text-red-200 hover:text-white"
           >
@@ -325,6 +333,7 @@ export default function AdminDashboard() {
           {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'exam_schedule' && <ExamScheduleTab onSuccess={() => showSuccess('Exam schedule updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'notice_panel' && <NoticePanelTab onSuccess={() => showSuccess('Notice updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'study_materials' && <StudyMaterialManagement />}
         </motion.div>
       </main>
     </div>
