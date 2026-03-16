@@ -14,11 +14,14 @@ export default function StudyMaterialManagement() {
   const [linkUrl, setLinkUrl] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     fetchMaterials();
   }, []);
 
   const fetchMaterials = async () => {
+    setLoading(true);
     console.log("Fetching materials...");
     try {
       const snapshot = await getDocs(collection(db, 'study_materials'));
@@ -26,6 +29,8 @@ export default function StudyMaterialManagement() {
       console.log("Materials fetched successfully");
     } catch (error) {
       console.error("Error fetching materials: ", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,28 +109,32 @@ export default function StudyMaterialManagement() {
         )}
       </div>
       <div className="space-y-4">
-        {Object.entries(groupedMaterials).map(([key, mats]: [string, any[]]) => (
-          <div key={key} className="p-4 border rounded">
-            <h3 className="font-bold">{key}</h3>
-            {mats.map((m: any) => (
-              <div key={m.id} className="ml-4 mt-2 flex justify-between items-center">
-                <div>
-                  {m.topics.map((t: any, i: number) => (
-                    <div key={i}>
-                      <p className="font-semibold">{t.title}</p>
-                      {t.links.map((l: any, j: number) => (
-                        <a key={j} href={l.url} target="_blank" className="block text-blue-600 underline">{l.title}</a>
-                      ))}
-                    </div>
-                  ))}
+        {loading ? (
+          <div className="text-center py-4">Loading study materials...</div>
+        ) : (
+          Object.entries(groupedMaterials).map(([key, mats]: [string, any[]]) => (
+            <div key={key} className="p-4 border rounded">
+              <h3 className="font-bold">{key}</h3>
+              {mats.map((m: any) => (
+                <div key={m.id} className="ml-4 mt-2 flex justify-between items-center">
+                  <div>
+                    {m.topics.map((t: any, i: number) => (
+                      <div key={i}>
+                        <p className="font-semibold">{t.title}</p>
+                        {t.links.map((l: any, j: number) => (
+                          <a key={j} href={l.url} target="_blank" className="block text-blue-600 underline">{l.title}</a>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => deleteMaterial(m.id)} className="text-red-500 hover:text-red-700">
+                    <Trash2 className="h-5 w-5" />
+                  </button>
                 </div>
-                <button onClick={() => deleteMaterial(m.id)} className="text-red-500 hover:text-red-700">
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ))}
+              ))}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
