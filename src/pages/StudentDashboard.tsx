@@ -342,7 +342,7 @@ function ResultsTab({ student }: { student: any }) {
             <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-wide">{schoolName}</h1>
             <p className="text-sm text-slate-700 font-semibold">{marksheetAddress}</p>
             <p className="text-sm text-slate-700 font-semibold">{marksheetPhone}</p>
-            <p className="text-sm text-slate-700 font-semibold">School Website: {marksheetWebsite}</p>
+            <p className="text-sm text-slate-700 font-semibold">School Website: https://uniquescienceacademy.onrender.com</p>
           </div>
           {logoUrl && <img src={logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
         </div>
