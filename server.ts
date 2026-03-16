@@ -50,7 +50,7 @@ async function initSettings() {
         marksheet_school_code: '1548',
         marksheet_address: 'Brahampur, Jale, Darbhanga, Bihar 847307',
         marksheet_phone: '(0542)-XXXXXXX',
-        marksheet_website: 'www.uniquescienceacademy.in',
+        marksheet_website: 'https://uniquescienceacademy.onrender.com',
         marksheet_email: 'info@uniquescienceacademy.in',
         hero_title: 'Welcome to Unique Science Academy',
         hero_subtitle: 'Empowering minds, shaping the future.',
@@ -105,7 +105,7 @@ async function sendDualNotification(eventType: string, userDetails: any, eventDe
   const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
   const settings = settingsSnap.data() || {};
   const schoolName = settings.school_name || 'Unique Science Academy';
-  const websiteUrl = settings.website_url || 'https://uniquescienceacademy.in';
+  const websiteUrl = settings.marksheet_website || 'https://uniquescienceacademy.onrender.com';
   const address = settings.contact_address ? settings.contact_address.replace(/\\n/g, ', ') : 'Brahampur, Jale, Darbhanga, Bihar 847307';
 
   switch (eventType) {

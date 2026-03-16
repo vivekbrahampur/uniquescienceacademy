@@ -345,7 +345,7 @@ function ResultsTab({ student }: { student: any }) {
             <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-wide">{schoolName}</h1>
             <p className="text-sm text-slate-700 font-semibold">{marksheetAddress}</p>
             <p className="text-sm text-slate-700 font-semibold">{marksheetPhone}</p>
-            <p className="text-sm text-slate-700 font-semibold">School Website: https://uniquescienceacademy.onrender.com</p>
+            <p className="text-sm text-slate-700 font-semibold">School Website: {marksheetWebsite}</p>
           </div>
           {logoUrl && <img src={logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
         </div>
@@ -360,7 +360,7 @@ function ResultsTab({ student }: { student: any }) {
         </div>
 
         {/* Student Details */}
-        <div className="border-2 border-slate-800 mb-6 relative z-10 bg-white/90">
+        <div className="border-2 border-slate-800 mb-6 relative z-10 bg-transparent">
           <div className="bg-yellow-400 text-center font-bold text-slate-900 py-1 border-b-2 border-slate-800 uppercase italic">
             Student Details
           </div>
@@ -412,7 +412,7 @@ function ResultsTab({ student }: { student: any }) {
         </div>
 
         {/* Academic Performance */}
-        <div className="border-2 border-slate-800 mb-6 relative z-10 bg-white/90">
+        <div className="border-2 border-slate-800 mb-6 relative z-10 bg-transparent">
           <div className="bg-green-500 text-center font-bold text-slate-900 py-1 border-b-2 border-slate-800 uppercase">
             Academic Performance : Scholastic Areas (8 Point Scale)
           </div>
@@ -443,7 +443,7 @@ function ResultsTab({ student }: { student: any }) {
                   );
                 })}
                 {/* Grand Total Row */}
-                <tr className="font-bold bg-slate-100 border-b-2 border-slate-800">
+                <tr className="font-bold bg-slate-100/50 border-b-2 border-slate-800">
                   <td className="border-r-2 border-slate-800 p-2 text-right uppercase">Grand Total</td>
                   <td className="border-r-2 border-slate-800 p-2">{results.reduce((acc, curr) => acc + (Number(curr.marks) || 0), 0)}</td>
                   <td className="border-r-2 border-slate-800 p-2">{results.reduce((acc, curr) => acc + (Number(curr.total_marks) || 0), 0)}</td>
@@ -470,19 +470,15 @@ function ResultsTab({ student }: { student: any }) {
         </div>
 
         {/* Remarks */}
-        <div className="border-2 border-slate-800 p-2 mb-6 relative z-10 font-bold bg-white/90">
+        <div className="border-2 border-slate-800 p-2 mb-6 relative z-10 font-bold bg-transparent">
           Class Teacher Remarks : 
         </div>
 
-        {/* Contact Us */}
-        <div className="flex items-center justify-between border-2 border-slate-800 p-4 mb-6 relative z-10 bg-white/90">
-            <div>
-                <p className="font-bold">Contact Us:</p>
-                <p className="text-sm">{marksheetAddress}</p>
-                <p className="text-sm">Mob: {marksheetPhone}</p>
-                <p className="text-sm">Email: {marksheetEmail}</p>
-            </div>
-            <QRCodeSVG value={`${resultCardQrPrefix} Student: ${student.name}, Roll: ${student.roll_no}, Marks: ${results.map(r => `${r.subject}:${r.marks}`).join(', ')}`} size={60} />
+        {/* QR Code */}
+        <div className="flex justify-center border-2 border-slate-800 p-4 mb-6 relative z-10 bg-transparent">
+            {student && results && (
+                <QRCodeSVG value={`${resultCardQrPrefix} Student: ${student.name || ''}, Roll: ${student.roll_no || ''}, Marks: ${results.map(r => `${r.subject || ''}:${r.marks || ''}`).join(', ')}, Address: ${marksheetAddress || ''}, Phone: ${marksheetPhone || ''}, Email: ${marksheetEmail || ''}`} size={100} />
+            )}
         </div>
 
         {/* Signatures */}

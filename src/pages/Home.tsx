@@ -355,16 +355,6 @@ export default function Home() {
               <h3 className="text-xl font-bold mb-4 text-white">Email Us</h3>
               <p className="text-blue-200 dark:text-slate-300 text-lg">{settings.contact_email}</p>
             </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.6 }}
-              className="bg-secondary/50 p-8 rounded-2xl border border-white/10 backdrop-blur-sm text-center hover:bg-secondary transition-colors flex items-center justify-center"
-            >
-              <QRCodeSVG value={settings.home_page_qr_content || 'https://uniquescienceacademy.onrender.com'} size={100} />
-            </motion.div>
           </div>
         </div>
       </section>

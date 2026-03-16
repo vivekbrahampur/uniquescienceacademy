@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Footer() {
   const { settings: themeSettings } = useTheme();
   const [contact, setContact] = useState({
     address: 'Brahampur, Jale\nDarbhanga, Bihar 847307',
     email: 'info@uniquescienceacademy.in',
-    phone: '+91 98765 43210'
+    phone: '+91 98765 43210',
+    qr_content: 'https://uniquescienceacademy.onrender.com'
   });
 
   useEffect(() => {
@@ -14,13 +16,12 @@ export default function Footer() {
       .then(res => res.json())
       .then(data => {
         if (data && !data.error) {
-          if (data.contact_address || data.contact_email || data.contact_phone) {
-            setContact({
-              address: data.contact_address || contact.address,
-              email: data.contact_email || contact.email,
-              phone: data.contact_phone || contact.phone
-            });
-          }
+          setContact({
+            address: data.contact_address || contact.address,
+            email: data.contact_email || contact.email,
+            phone: data.contact_phone || contact.phone,
+            qr_content: data.home_page_qr_content || contact.qr_content
+          });
         }
       })
       .catch(err => console.error(err));
@@ -44,15 +45,20 @@ export default function Footer() {
               <li><a href="/admin/login" className="hover:opacity-80 transition-opacity" style={{ color: themeSettings.accentColor }}>Admin Login</a></li>
             </ul>
           </div>
-          <div>
-            <h3 className="text-white text-lg font-bold mb-4 uppercase tracking-wider">Contact Us</h3>
-            <address className="not-italic text-sm text-slate-400 space-y-2">
-              {contact.address.split('\n').map((line, idx) => (
-                <p key={idx}>{line}</p>
-              ))}
-              <p>Email: {contact.email}</p>
-              <p>Phone: {contact.phone}</p>
-            </address>
+          <div className="flex items-start gap-4">
+            <div>
+              <h3 className="text-white text-lg font-bold mb-4 uppercase tracking-wider">Contact Us</h3>
+              <address className="not-italic text-sm text-slate-400 space-y-2">
+                {contact.address.split('\n').map((line, idx) => (
+                  <p key={idx}>{line}</p>
+                ))}
+                <p>Email: {contact.email}</p>
+                <p>Phone: {contact.phone}</p>
+              </address>
+            </div>
+            <div className="bg-white p-2 rounded-lg">
+              {contact.qr_content && <QRCodeSVG value={contact.qr_content} size={80} />}
+            </div>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
