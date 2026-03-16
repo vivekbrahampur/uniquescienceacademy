@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
-import { Plus, Trash2, BookOpen } from 'lucide-react';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { Plus, BookOpen } from 'lucide-react';
+import { CLASSES, SUBJECTS } from '../constants';
 
 export default function StudyMaterialManagement() {
   const [materials, setMaterials] = useState<any[]>([]);
-  const [className, setClassName] = useState('');
-  const [subject, setSubject] = useState('');
+  const [className, setClassName] = useState(CLASSES[0]);
+  const [subject, setSubject] = useState(SUBJECTS[0]);
+  const [folderName, setFolderName] = useState('');
   const [topicTitle, setTopicTitle] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
@@ -21,25 +23,39 @@ export default function StudyMaterialManagement() {
   };
 
   const addMaterial = async () => {
-    if (!className || !subject || !topicTitle || !linkTitle || !linkUrl) return;
+    if (!className || !subject || !folderName || !topicTitle || !linkTitle || !linkUrl) return;
     
-    // In a real app, you'd check if material for this class/subject exists and update it.
-    // For simplicity, let's just add a new one.
     await addDoc(collection(db, 'study_materials'), {
       class_name: className,
       subject: subject,
+      folder_name: folderName,
       topics: [{ title: topicTitle, links: [{ title: linkTitle, url: linkUrl }] }],
       createdAt: new Date().toISOString()
     });
     fetchMaterials();
+    setTopicTitle('');
+    setLinkTitle('');
+    setLinkUrl('');
   };
+
+  const groupedMaterials = materials.reduce((acc, m) => {
+    const key = `${m.class_name} - ${m.subject} - ${m.folder_name}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(m);
+    return acc;
+  }, {} as Record<string, any[]>);
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
       <h2 className="text-2xl font-bold mb-6">Study Material Management</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <input placeholder="Class" value={className} onChange={e => setClassName(e.target.value)} className="p-2 border rounded" />
-        <input placeholder="Subject" value={subject} onChange={e => setSubject(e.target.value)} className="p-2 border rounded" />
+        <select value={className} onChange={e => setClassName(e.target.value)} className="p-2 border rounded">
+          {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={subject} onChange={e => setSubject(e.target.value)} className="p-2 border rounded">
+          {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <input placeholder="Folder Name" value={folderName} onChange={e => setFolderName(e.target.value)} className="p-2 border rounded" />
         <input placeholder="Topic Title" value={topicTitle} onChange={e => setTopicTitle(e.target.value)} className="p-2 border rounded" />
         <input placeholder="Link Title" value={linkTitle} onChange={e => setLinkTitle(e.target.value)} className="p-2 border rounded" />
         <input placeholder="Google Drive Link" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className="p-2 border rounded md:col-span-2" />
@@ -48,14 +64,18 @@ export default function StudyMaterialManagement() {
         </button>
       </div>
       <div className="space-y-4">
-        {materials.map(m => (
-          <div key={m.id} className="p-4 border rounded">
-            <h3 className="font-bold">{m.class_name} - {m.subject}</h3>
-            {m.topics.map((t: any, i: number) => (
-              <div key={i} className="ml-4 mt-2">
-                <p className="font-semibold">{t.title}</p>
-                {t.links.map((l: any, j: number) => (
-                  <a key={j} href={l.url} target="_blank" className="block text-blue-600 underline">{l.title}</a>
+        {Object.entries(groupedMaterials).map(([key, mats]: [string, any[]]) => (
+          <div key={key} className="p-4 border rounded">
+            <h3 className="font-bold">{key}</h3>
+            {mats.map((m: any) => (
+              <div key={m.id} className="ml-4 mt-2">
+                {m.topics.map((t: any, i: number) => (
+                  <div key={i}>
+                    <p className="font-semibold">{t.title}</p>
+                    {t.links.map((l: any, j: number) => (
+                      <a key={j} href={l.url} target="_blank" className="block text-blue-600 underline">{l.title}</a>
+                    ))}
+                  </div>
                 ))}
               </div>
             ))}
