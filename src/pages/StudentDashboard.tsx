@@ -327,7 +327,7 @@ function ResultsTab({ student }: { student: any }) {
       </div>
 
       {/* Marksheet Content */}
-      <div className="relative border-4 border-double border-slate-800 p-8 rounded-none bg-white font-sans mx-auto max-w-4xl print:p-4 print:border-none" style={{ minHeight: '1000px' }}>
+      <div className="relative border-4 border-double border-slate-800 p-8 rounded-none bg-white font-sans mx-auto max-w-4xl print:p-4 print:border-4 print:border-double" style={{ minHeight: '1000px' }}>
         {/* Watermark */}
         {logoUrl && (
           <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none z-0">
@@ -339,12 +339,7 @@ function ResultsTab({ student }: { student: any }) {
         <div className="flex justify-between items-start mb-4 border-b-2 border-slate-800 pb-4 relative z-10">
           {logoUrl && <img src={logoUrl} alt="School Logo" className="w-24 h-24 object-contain" />}
           <div className="text-center flex-1 px-4">
-            <div className="flex justify-between text-xs font-bold mb-1">
-              <span>Affiliation No : {marksheetAffiliationNo}</span>
-              <span>School Code : {marksheetSchoolCode}</span>
-            </div>
             <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-wide">{schoolName}</h1>
-            <p className="text-sm text-slate-700 font-semibold italic">A Sr. Sec. School Affiliated To CBSE New Delhi</p>
             <p className="text-sm text-slate-700 font-semibold">{marksheetAddress}</p>
             <p className="text-sm text-slate-700 font-semibold">{marksheetPhone}</p>
             <p className="text-sm text-slate-700 font-semibold">School Website: {marksheetWebsite}</p>
@@ -469,33 +464,6 @@ function ResultsTab({ student }: { student: any }) {
               <p>No results have been uploaded yet.</p>
             </div>
           )}
-        </div>
-
-        {/* Co-Scholastic Areas */}
-        <div className="border-2 border-slate-800 mb-6 relative z-10 bg-white/90">
-          <div className="bg-blue-300 text-center font-bold text-slate-900 py-1 border-b-2 border-slate-800 uppercase">
-            Co-Scholastic Areas : Term - 1 [On A 3-Point (A-C) Grading Scale]
-          </div>
-          <table className="w-full text-left text-sm border-collapse">
-            <tbody>
-              <tr className="border-b border-slate-400">
-                <td className="border-r-2 border-slate-800 p-2 uppercase">Work Education (OR PRE-VOCATIONAL EDUCATION)</td>
-                <td className="p-2 text-center font-bold w-24">A</td>
-              </tr>
-              <tr className="border-b border-slate-400">
-                <td className="border-r-2 border-slate-800 p-2 uppercase">Art Education</td>
-                <td className="p-2 text-center font-bold w-24">A</td>
-              </tr>
-              <tr className="border-b border-slate-400">
-                <td className="border-r-2 border-slate-800 p-2 uppercase">Health & Physical Education</td>
-                <td className="p-2 text-center font-bold w-24">A</td>
-              </tr>
-              <tr>
-                <td className="border-r-2 border-slate-800 p-2 uppercase">Discipline</td>
-                <td className="p-2 text-center font-bold w-24">A</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
 
         {/* Remarks */}
