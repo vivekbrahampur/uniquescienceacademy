@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
-import { Plus, BookOpen } from 'lucide-react';
+import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { Plus, Trash2, BookOpen } from 'lucide-react';
 import { CLASSES, SUBJECTS } from '../constants';
 
 export default function StudyMaterialManagement() {
@@ -18,24 +18,56 @@ export default function StudyMaterialManagement() {
   }, []);
 
   const fetchMaterials = async () => {
-    const snapshot = await getDocs(collection(db, 'study_materials'));
-    setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    console.log("Fetching materials...");
+    try {
+      const snapshot = await getDocs(collection(db, 'study_materials'));
+      setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      console.log("Materials fetched successfully");
+    } catch (error) {
+      console.error("Error fetching materials: ", error);
+    }
   };
 
   const addMaterial = async () => {
-    if (!className || !subject || !folderName || !topicTitle || !linkTitle || !linkUrl) return;
+    console.log("Attempting to add material:", { className, subject, folderName, topicTitle, linkTitle, linkUrl, db });
+    if (!db) {
+      console.error("Firestore db is not initialized");
+      alert("Database not initialized. Please try again later.");
+      return;
+    }
+    if (!className || !subject || !folderName || !topicTitle || !linkTitle || !linkUrl) {
+      console.error("Validation failed: missing fields", { className, subject, folderName, topicTitle, linkTitle, linkUrl });
+      alert("Please fill in all fields.");
+      return;
+    }
     
-    await addDoc(collection(db, 'study_materials'), {
-      class_name: className,
-      subject: subject,
-      folder_name: folderName,
-      topics: [{ title: topicTitle, links: [{ title: linkTitle, url: linkUrl }] }],
-      createdAt: new Date().toISOString()
-    });
-    fetchMaterials();
-    setTopicTitle('');
-    setLinkTitle('');
-    setLinkUrl('');
+    try {
+      await addDoc(collection(db, 'study_materials'), {
+        class_name: className,
+        subject: subject,
+        folder_name: folderName,
+        topics: [{ title: topicTitle, links: [{ title: linkTitle, url: linkUrl }] }],
+        createdAt: new Date().toISOString()
+      });
+      fetchMaterials();
+      setTopicTitle('');
+      setLinkTitle('');
+      setLinkUrl('');
+      console.log("Material added successfully");
+    } catch (error) {
+      console.error("Error adding material: ", error);
+      alert("Failed to upload study material. Please try again.");
+    }
+  };
+
+  const deleteMaterial = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'study_materials', id));
+      fetchMaterials();
+    } catch (error) {
+      console.error("Error deleting material: ", error);
+      alert("Failed to delete study material. Please try again.");
+    }
   };
 
   const groupedMaterials = materials.reduce((acc, m) => {
@@ -68,15 +100,20 @@ export default function StudyMaterialManagement() {
           <div key={key} className="p-4 border rounded">
             <h3 className="font-bold">{key}</h3>
             {mats.map((m: any) => (
-              <div key={m.id} className="ml-4 mt-2">
-                {m.topics.map((t: any, i: number) => (
-                  <div key={i}>
-                    <p className="font-semibold">{t.title}</p>
-                    {t.links.map((l: any, j: number) => (
-                      <a key={j} href={l.url} target="_blank" className="block text-blue-600 underline">{l.title}</a>
-                    ))}
-                  </div>
-                ))}
+              <div key={m.id} className="ml-4 mt-2 flex justify-between items-center">
+                <div>
+                  {m.topics.map((t: any, i: number) => (
+                    <div key={i}>
+                      <p className="font-semibold">{t.title}</p>
+                      {t.links.map((l: any, j: number) => (
+                        <a key={j} href={l.url} target="_blank" className="block text-blue-600 underline">{l.title}</a>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => deleteMaterial(m.id)} className="text-red-500 hover:text-red-700">
+                  <Trash2 className="h-5 w-5" />
+                </button>
               </div>
             ))}
           </div>
