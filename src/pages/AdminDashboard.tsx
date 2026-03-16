@@ -297,7 +297,7 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {activeTab === 'registration' && <RegistrationTab onSuccess={() => { showSuccess('Student registered successfully'); fetchStudents(); }} showError={showError} />}
+          {activeTab === 'registration' && <RegistrationTab onSuccess={() => { showSuccess('Student registered successfully'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'full_registration' && <FullRegistrationTab onSuccess={() => { showSuccess('Student full registration successful. Confirmation email sent.'); fetchStudents(); }} showError={showError} />}
           {activeTab === 'manage_students' && <ManageStudentsTab students={students} onSuccess={() => { showSuccess('Operation successful'); fetchStudents(); }} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'manage_teachers' && (
@@ -605,7 +605,7 @@ export function NoticePanelTab({ onSuccess, showSuccess, showError }: { onSucces
   );
 }
 
-function RegistrationTab({ onSuccess, showError }: { onSuccess: () => void, showError?: (m: string) => void }) {
+function RegistrationTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [formData, setFormData] = useState({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
   const [showCamera, setShowCamera] = useState(false);
@@ -689,6 +689,7 @@ function RegistrationTab({ onSuccess, showError }: { onSuccess: () => void, show
       });
       if (res.ok) {
         onSuccess();
+        if (showSuccess) showSuccess('Student registered successfully');
         setFormData({ name: '', father_name: '', mother_name: '', class_name: '1', roll_no: '', photo_url: '' });
       } else {
         if (showError) showError('Failed to register student. Roll number might already exist for this class.');
@@ -2577,7 +2578,9 @@ function MarksheetSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess
     marksheet_phone: '',
     marksheet_website: '',
     marksheet_email: '',
-    school_name: ''
+    school_name: '',
+    result_card_qr_prefix: '',
+    home_page_qr_content: ''
   });
   const [loading, setLoading] = useState(true);
 
@@ -2594,7 +2597,9 @@ function MarksheetSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess
           marksheet_phone: data.marksheet_phone || '',
           marksheet_website: data.marksheet_website || '',
           marksheet_email: data.marksheet_email || '',
-          school_name: data.school_name || ''
+          school_name: data.school_name || '',
+          result_card_qr_prefix: data.result_card_qr_prefix || '',
+          home_page_qr_content: data.home_page_qr_content || ''
         });
         setLoading(false);
       });
@@ -2646,8 +2651,12 @@ function MarksheetSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess
             <input type="text" value={settings.marksheet_affiliation_no} onChange={e => setSettings({...settings, marksheet_affiliation_no: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">School Code</label>
-            <input type="text" value={settings.marksheet_school_code} onChange={e => setSettings({...settings, marksheet_school_code: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+            <label className="block text-sm font-medium text-slate-700 mb-2">Result Card QR Prefix</label>
+            <input type="text" value={settings.result_card_qr_prefix} onChange={e => setSettings({...settings, result_card_qr_prefix: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="URL prefix for QR code" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Home Page QR Content</label>
+            <input type="text" value={settings.home_page_qr_content} onChange={e => setSettings({...settings, home_page_qr_content: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Content for Home Page QR" />
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-2">School Address</label>

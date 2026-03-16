@@ -263,6 +263,7 @@ function ResultsTab({ student }: { student: any }) {
   const [marksheetPhone, setMarksheetPhone] = useState('(0542)-XXXXXXX');
   const [marksheetWebsite, setMarksheetWebsite] = useState('www.uniquescienceacademy.in');
   const [marksheetEmail, setMarksheetEmail] = useState('info@uniquescienceacademy.in');
+  const [resultCardQrPrefix, setResultCardQrPrefix] = useState('');
 
   useEffect(() => {
     fetch('/api/settings')
@@ -278,6 +279,7 @@ function ResultsTab({ student }: { student: any }) {
         if (data.marksheet_phone) setMarksheetPhone(data.marksheet_phone);
         if (data.marksheet_website) setMarksheetWebsite(data.marksheet_website);
         if (data.marksheet_email) setMarksheetEmail(data.marksheet_email);
+        if (data.result_card_qr_prefix) setResultCardQrPrefix(data.result_card_qr_prefix);
       })
       .catch(console.error);
 
@@ -480,7 +482,7 @@ function ResultsTab({ student }: { student: any }) {
                 <p className="text-sm">Mob: {marksheetPhone}</p>
                 <p className="text-sm">Email: {marksheetEmail}</p>
             </div>
-            <QRCodeSVG value={`Address: ${marksheetAddress}, Mob: ${marksheetPhone}, Email: ${marksheetEmail}`} size={80} />
+            <QRCodeSVG value={`${resultCardQrPrefix} Student: ${student.name}, Roll: ${student.roll_no}, Marks: ${results.map(r => `${r.subject}:${r.marks}`).join(', ')}`} size={60} />
         </div>
 
         {/* Signatures */}
