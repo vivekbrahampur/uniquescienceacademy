@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, limit } from 'firebase/firestore';
 import { Plus, Trash2, BookOpen, CheckCircle } from 'lucide-react';
 import { CLASSES, SUBJECTS } from '../constants';
 
@@ -24,7 +24,9 @@ export default function StudyMaterialManagement() {
     setLoading(true);
     console.log("Fetching materials...");
     try {
-      const snapshot = await getDocs(collection(db, 'study_materials'));
+      // Fetching the 50 most recent materials to improve performance
+      const q = query(collection(db, 'study_materials'), orderBy('createdAt', 'desc'), limit(50));
+      const snapshot = await getDocs(q);
       setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       console.log("Materials fetched successfully");
     } catch (error) {
@@ -69,12 +71,14 @@ export default function StudyMaterialManagement() {
   };
 
   const deleteMaterial = async (id: string) => {
+    console.log("Attempting to delete material with ID:", id);
     try {
       await deleteDoc(doc(db, 'study_materials', id));
+      console.log("Material deleted successfully");
       fetchMaterials();
     } catch (error) {
       console.error("Error deleting material: ", error);
-      alert("Failed to delete study material. Please try again.");
+      alert("Failed to delete study material. Please check console for details.");
     }
   };
 

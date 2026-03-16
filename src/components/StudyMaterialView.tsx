@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { Download, BookOpen } from 'lucide-react';
 
 export default function StudyMaterialView({ studentClass }: { studentClass: string }) {
@@ -13,7 +13,7 @@ export default function StudyMaterialView({ studentClass }: { studentClass: stri
 
   const fetchMaterials = async () => {
     setLoading(true);
-    const q = query(collection(db, 'study_materials'), where('class_name', '==', studentClass));
+    const q = query(collection(db, 'study_materials'), where('class_name', '==', studentClass), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     setLoading(false);
