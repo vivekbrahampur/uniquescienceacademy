@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { Plus, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Trash2, BookOpen, CheckCircle } from 'lucide-react';
 import { CLASSES, SUBJECTS } from '../constants';
 
 export default function StudyMaterialManagement() {
@@ -12,6 +12,7 @@ export default function StudyMaterialManagement() {
   const [topicTitle, setTopicTitle] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     fetchMaterials();
@@ -53,6 +54,8 @@ export default function StudyMaterialManagement() {
       setTopicTitle('');
       setLinkTitle('');
       setLinkUrl('');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
       console.log("Material added successfully");
     } catch (error) {
       console.error("Error adding material: ", error);
@@ -94,6 +97,11 @@ export default function StudyMaterialManagement() {
         <button onClick={addMaterial} className="bg-blue-900 text-white p-2 rounded flex items-center justify-center">
           <Plus className="mr-2" /> Add Material
         </button>
+        {showSuccess && (
+          <div className="flex items-center text-green-600 font-semibold">
+            <CheckCircle className="mr-2" /> Added successfully!
+          </div>
+        )}
       </div>
       <div className="space-y-4">
         {Object.entries(groupedMaterials).map(([key, mats]: [string, any[]]) => (
