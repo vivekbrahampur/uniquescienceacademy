@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserCog, Lock, AlertCircle, Shield } from 'lucide-react';
+import { UserCog, Lock, AlertCircle, Shield, Eye, EyeOff } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export default function AdminLogin() {
   const { settings: themeSettings } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [twoFactorToken, setTwoFactorToken] = useState('');
   const [requires2FA, setRequires2FA] = useState(false);
   const [error, setError] = useState('');
@@ -100,14 +101,25 @@ export default function AdminLogin() {
                     <input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
-                      className="appearance-none rounded-lg relative block w-full px-3 py-3 pl-10 border border-slate-300 dark:border-slate-600 placeholder-slate-500 text-slate-900 dark:text-white focus:outline-none focus:z-10 sm:text-sm bg-white dark:bg-slate-700"
+                      className="appearance-none rounded-lg relative block w-full px-3 py-3 pl-10 pr-10 border border-slate-300 dark:border-slate-600 placeholder-slate-500 text-slate-900 dark:text-white focus:outline-none focus:z-10 sm:text-sm bg-white dark:bg-slate-700"
                       style={{ borderColor: themeSettings.primaryColor }}
                       placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-slate-400" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-slate-400" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </>
