@@ -235,7 +235,7 @@ export default function AdminDashboard() {
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'email_settings' ? 'bg-secondary text-accent' : 'hover:bg-secondary'}`}
           >
             <Mail className="h-5 w-5" />
-            <span>Email Settings</span>
+            <span>Notification Settings</span>
           </button>
           <button
             onClick={() => handleTabChange('theme_settings')}
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
           {activeTab === 'tests' && <TestsTab onSuccess={() => showSuccess('Question added successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'exam_management' && <ExamManagement />}
           {activeTab === 'security' && <SecurityTab onSuccess={() => showSuccess('Credentials updated successfully')} showSuccess={showSuccess} showError={showError} />}
-          {activeTab === 'email_settings' && <EmailSettingsTab onSuccess={() => showSuccess('Email settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
+          {activeTab === 'email_settings' && <NotificationSettingsTab onSuccess={() => showSuccess('Notification settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'theme_settings' && <ThemeSettingsTab onSuccess={() => showSuccess('Theme settings updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'exam_schedule' && <ExamScheduleTab onSuccess={() => showSuccess('Exam schedule updated successfully')} showSuccess={showSuccess} showError={showError} />}
           {activeTab === 'notice_panel' && <NoticePanelTab onSuccess={() => showSuccess('Notice updated successfully')} showSuccess={showSuccess} showError={showError} />}
@@ -1916,7 +1916,7 @@ export function TestsTab({ onSuccess, showSuccess, showError }: { onSuccess: () 
   );
 }
 
-function EmailSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
+function NotificationSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: () => void, showSuccess?: (m: string) => void, showError?: (m: string) => void }) {
   const adminFetch = useAdminFetch();
   const [settings, setSettings] = useState({
     smtp_host: '',
@@ -1948,54 +1948,56 @@ function EmailSettingsTab({ onSuccess, showSuccess, showError }: { onSuccess: ()
       });
       if (res.ok) {
         onSuccess();
-        if (showSuccess) showSuccess('Email settings updated successfully');
+        if (showSuccess) showSuccess('Notification settings updated successfully');
       } else {
-        if (showError) showError('Failed to update email settings');
+        if (showError) showError('Failed to update notification settings');
       }
     } catch (err) {
       console.error(err);
-      if (showError) showError('An error occurred while updating email settings');
+      if (showError) showError('An error occurred while updating notification settings');
     }
   };
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-      <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Email Settings (SMTP)</h3>
-      <p className="text-sm text-slate-500 mb-6">Configure your email server to send automatic confirmation emails to students.</p>
-      
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h4 className="font-bold text-blue-900 mb-2">Using Gmail?</h4>
-        <p className="text-sm text-blue-800">
-          If you are using Gmail, you must use an <strong>App Password</strong> instead of your regular password. 
-          Go to your Google Account Settings {'>'} Security {'>'} 2-Step Verification {'>'} App Passwords to generate one.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-4">Email Settings (SMTP)</h3>
+        <p className="text-sm text-slate-500 mb-6">Configure your email server to send automatic confirmation emails to students.</p>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h4 className="font-bold text-blue-900 mb-2">Using Gmail?</h4>
+          <p className="text-sm text-blue-800">
+            If you are using Gmail, you must use an <strong>App Password</strong> instead of your regular password. 
+            Go to your Google Account Settings {'>'} Security {'>'} 2-Step Verification {'>'} App Passwords to generate one.
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">SMTP Host</label>
-            <input type="text" placeholder="smtp.gmail.com" value={settings.smtp_host} onChange={e => setSettings({...settings, smtp_host: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">SMTP Host</label>
+              <input type="text" placeholder="smtp.gmail.com" value={settings.smtp_host} onChange={e => setSettings({...settings, smtp_host: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">SMTP Port</label>
+              <input type="text" placeholder="587" value={settings.smtp_port} onChange={e => setSettings({...settings, smtp_port: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">SMTP Port</label>
-            <input type="text" placeholder="587" value={settings.smtp_port} onChange={e => setSettings({...settings, smtp_port: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Email Address (SMTP User)</label>
+              <input type="email" placeholder="admin@school.com" value={settings.smtp_user} onChange={e => setSettings({...settings, smtp_user: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">App Password (SMTP Pass)</label>
+              <input type="password" placeholder="••••••••" value={settings.smtp_pass} onChange={e => setSettings({...settings, smtp_pass: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Email Address (SMTP User)</label>
-            <input type="email" placeholder="admin@school.com" value={settings.smtp_user} onChange={e => setSettings({...settings, smtp_user: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">App Password (SMTP Pass)</label>
-            <input type="password" placeholder="••••••••" value={settings.smtp_pass} onChange={e => setSettings({...settings, smtp_pass: e.target.value})} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-          </div>
-        </div>
-        <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">
-          Save Email Settings
-        </button>
-      </form>
+          <button type="submit" className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">
+            Save Email Settings
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
@@ -2711,6 +2713,7 @@ export function ManageStudentsTab({ students, onSuccess, showSuccess, showError 
   };
 
   const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete student "${name}"? This action cannot be undone.`)) return;
     try {
       const res = await adminFetch(`/api/admin/students/${id}`, { method: 'DELETE' });
       if (res.ok) {

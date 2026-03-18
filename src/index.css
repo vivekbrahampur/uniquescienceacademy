@@ -1,32 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-primary: var(--school-primary);
   --color-secondary: var(--school-secondary);
   --color-accent: var(--school-accent);
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 @layer base {
   :root {
-    --school-primary: #1e3a8a;
-    --school-secondary: #1e40af;
-    --school-accent: #ffffff;
+    --school-primary: #0f172a; /* Slate 900 */
+    --school-secondary: #334155; /* Slate 700 */
+    --school-accent: #f59e0b; /* Amber 500 */
   }
 
   .dark {
-    --bg-main: #0f172a;
-    --bg-card: #1e293b;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border-main: #334155;
+    --school-primary: #f8fafc; /* Slate 50 */
+    --school-secondary: #cbd5e1; /* Slate 300 */
+    --school-accent: #fbbf24; /* Amber 400 */
   }
 
   body {
-    @apply bg-blue-100 text-slate-900 transition-colors duration-300;
+    @apply bg-slate-50 text-slate-900 font-sans transition-colors duration-300;
   }
 
   .dark body {
-    @apply bg-blue-950 text-slate-100;
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
   }
 }
 

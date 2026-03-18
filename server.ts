@@ -272,6 +272,9 @@ async function sendDualNotification(eventType: string, userDetails: any, eventDe
     promises.push(smsPromise);
   }
 
+  // 3. Send WhatsApp
+  /* WhatsApp integration removed per user request */
+
   await Promise.allSettled(promises);
 }
 // --- End Notification Service ---
@@ -1247,6 +1250,47 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(400).json({ error: 'Failed to delete exam' });
+    }
+  });
+
+  // Dynamic manifest.json
+  app.get('/manifest.json', async (req, res) => {
+    try {
+      const settingsSnap = await getDocs(collection(db, 'settings'));
+      const settings: any = {};
+      settingsSnap.forEach(doc => {
+        settings[doc.id] = doc.data().value;
+      });
+
+      const schoolName = settings.school_name || 'Unique Science Academy Portal';
+      const logoUrl = settings.logo_url || 'https://picsum.photos/seed/usa192/192/192';
+
+      const manifest = {
+        name: schoolName,
+        short_name: schoolName.length > 12 ? schoolName.substring(0, 12) : schoolName,
+        start_url: "/",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#1e3a8a",
+        icons: [
+          {
+            src: logoUrl,
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any"
+          },
+          {
+            src: logoUrl,
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable"
+          }
+        ]
+      };
+      res.json(manifest);
+    } catch (error) {
+      // Fallback to static manifest if firestore fails
+      res.sendFile(path.join(process.cwd(), 'public', 'manifest.json'));
     }
   });
 
