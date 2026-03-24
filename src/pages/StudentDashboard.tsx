@@ -255,7 +255,7 @@ function ResultsTab({ student }: { student: any }) {
   const [loading, setLoading] = useState(true);
   const [logoUrl, setLogoUrl] = useState('');
   const [schoolName, setSchoolName] = useState('Unique Science Academy');
-  const [marksheetHeading, setMarksheetHeading] = useState('Report Card (Term-2)');
+  const [marksheetHeading, setMarksheetHeading] = useState('Report Card');
   const [marksheetSubheading, setMarksheetSubheading] = useState('');
   const [marksheetAffiliationNo, setMarksheetAffiliationNo] = useState('1548G');
   const [marksheetSchoolCode, setMarksheetSchoolCode] = useState('1548');
@@ -352,8 +352,14 @@ function ResultsTab({ student }: { student: any }) {
 
         {/* Title */}
         <div className="text-center mb-6 relative z-10">
-          <h2 className="text-2xl font-bold text-slate-800 border-2 border-slate-800 inline-block px-8 py-1 uppercase">{marksheetHeading}</h2>
-          {marksheetSubheading && <p className="text-sm font-bold text-slate-700 mt-1">{marksheetSubheading}</p>}
+          <h2 className="text-2xl font-bold text-slate-800 border-2 border-slate-800 inline-block px-8 py-1 uppercase">
+            {marksheetHeading.replace(/Term 2/gi, '').trim()}
+          </h2>
+          {marksheetSubheading && (
+            <div className="text-sm font-bold text-slate-700 mt-1 uppercase">
+              {marksheetSubheading.replace(/Term 2/gi, '').trim()}
+            </div>
+          )}
           <div className="mt-2 font-bold text-slate-800">
             Class : {student.class_name} &nbsp;&nbsp;&nbsp; Section : A &nbsp;&nbsp;&nbsp; Session : 2026-27
           </div>
@@ -364,49 +370,61 @@ function ResultsTab({ student }: { student: any }) {
           <div className="bg-yellow-400 text-center font-bold text-slate-900 py-1 border-b-2 border-slate-800 uppercase italic">
             Student Details
           </div>
-          <div className="grid grid-cols-2 text-sm">
-            <div className="p-2 border-r-2 border-slate-800">
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Admission No</span>
-                <span>: {student.roll_no}</span>
+          <div className="flex text-sm">
+            <div className="flex-1 grid grid-cols-2">
+              <div className="p-2 border-r-2 border-slate-800">
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Admission No</span>
+                  <span>: {student.roll_no}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Student Name</span>
+                  <span>: {student.name}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Mother's Name</span>
+                  <span>: {student.mother_name || 'N/A'}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Father's Name</span>
+                  <span>: {student.father_name}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2">
+                  <span className="font-semibold">Address</span>
+                  <span>: {student.address || 'N/A'}</span>
+                </div>
               </div>
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Student Name</span>
-                <span>: {student.name}</span>
-              </div>
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Mother's Name</span>
-                <span>: {student.mother_name || 'N/A'}</span>
-              </div>
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Father's Name</span>
-                <span>: {student.father_name}</span>
-              </div>
-              <div className="grid grid-cols-[120px_auto] gap-2">
-                <span className="font-semibold">Address</span>
-                <span>: {student.address || 'N/A'}</span>
+              <div className="p-2 border-r-2 border-slate-800">
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Roll No</span>
+                  <span>: {student.roll_no}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">DOB</span>
+                  <span>: {student.dob || 'N/A'}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Contact no</span>
+                  <span>: {student.phone || 'N/A'}</span>
+                </div>
+                <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
+                  <span className="font-semibold">Attendance</span>
+                  <span>: N/A</span>
+                </div>
+                <div className="text-red-500 text-xs italic mt-2">
+                  *Total Attendance/Working Days
+                </div>
               </div>
             </div>
-            <div className="p-2">
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Roll No</span>
-                <span>: {student.roll_no}</span>
+            <div className="w-32 p-2 flex flex-col items-center justify-center border-l-2 border-slate-800">
+              <div className="w-24 h-28 border-2 border-slate-800 bg-slate-50 flex items-center justify-center overflow-hidden">
+                {student.photo_url ? (
+                  <img src={student.photo_url} alt="Student" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] text-slate-400 text-center px-1 uppercase">No Photo</span>
+                )}
               </div>
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">DOB</span>
-                <span>: {student.dob || 'N/A'}</span>
-              </div>
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Contact no</span>
-                <span>: {student.phone || 'N/A'}</span>
-              </div>
-              <div className="grid grid-cols-[120px_auto] gap-2 mb-1">
-                <span className="font-semibold">Attendance</span>
-                <span>: N/A</span>
-              </div>
-              <div className="text-red-500 text-xs italic mt-2">
-                *Total Attendance/Working Days
-              </div>
+              <span className="text-[10px] font-bold mt-1 uppercase">Student Photo</span>
             </div>
           </div>
         </div>
