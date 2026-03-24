@@ -80,13 +80,6 @@ export default function Home() {
       glow: 'shadow-indigo-500/20'
     },
     {
-      title: 'PARENT PORTAL',
-      description: 'Check grades, track progress, manage schedules, and communicate with teachers.',
-      icon: Users,
-      color: 'from-emerald-600 to-emerald-400',
-      glow: 'shadow-emerald-500/20'
-    },
-    {
       title: 'STAFF PORTAL',
       description: 'Lesson planning, grade entry, leave management, and resource allocation.',
       icon: UserCog,
@@ -98,8 +91,8 @@ export default function Home() {
   const testimonials = [
     {
       name: 'Sarah Johnson',
-      role: 'Parent',
-      content: 'Game-changer for communication! I can track my child\'s progress in real-time.',
+      role: 'Alumni',
+      content: 'The academy provided me with the foundation I needed for my medical career.',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
       rating: 5
     },
@@ -121,7 +114,7 @@ export default function Home() {
 
   const updates = [
     { title: 'Science Fair Winners Announced', time: '2 hours ago', type: 'Award' },
-    { title: 'Parent-Teacher Meeting on 15th', time: '5 hours ago', type: 'Event' },
+    { title: 'Annual Sports Day Registration', time: '5 hours ago', type: 'Event' },
     { title: 'New Library Resources Added', time: '1 day ago', type: 'Update' }
   ];
 
@@ -362,8 +355,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 items-stretch">
             {/* Side Logins (Left) */}
-            <div className="xl:col-span-3 flex flex-col gap-8">
-              <LoginCard title="PARENT LOGIN" icon={Users} to="/parent/login" />
+            <div className="xl:col-span-3">
               <LoginCard title="STUDENT LOGIN" icon={User} to="/student/login" />
             </div>
 
@@ -413,9 +405,8 @@ export default function Home() {
             </div>
 
             {/* Side Logins (Right) */}
-            <div className="xl:col-span-3 flex flex-col gap-8">
+            <div className="xl:col-span-3">
               <LoginCard title="STAFF LOGIN" icon={UserCog} to="/teacher/login" />
-              <LoginCard title="GUEST ACCESS" icon={Users} to="/guest/access" />
             </div>
           </div>
         </div>

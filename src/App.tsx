@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
@@ -14,27 +14,36 @@ import Footer from './components/Footer';
 
 import ErrorBoundary from './components/ErrorBoundary';
 
+function AppContent() {
+  const location = useLocation();
+  const isDashboard = location.pathname.includes('/dashboard');
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
+      {!isDashboard && <Navbar />}
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/student/login" element={<StudentLogin />} />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/teacher/login" element={<TeacherLogin />} />
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/teacher/reset-password/:token" element={<TeacherResetPassword />} />
+        </Routes>
+      </main>
+      {!isDashboard && <Footer />}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/forgot-password" element={<ForgotPassword />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/student/login" element={<StudentLogin />} />
-              <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/teacher/login" element={<TeacherLogin />} />
-              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-              <Route path="/teacher/reset-password/:token" element={<TeacherResetPassword />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <AppContent />
       </BrowserRouter>
     </ErrorBoundary>
   );
